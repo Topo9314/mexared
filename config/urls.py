@@ -19,7 +19,7 @@ def root_redirect(request):
     """
     Redirecciona automáticamente la raíz del sitio al sistema de login.
     """
-    return redirect('login')  # Asegúrate que 'login' esté definido correctamente en tus urls de users o auth
+    return redirect('users:login')  # Asegúrate que 'login' esté definido correctamente en tus urls de users o auth
 
 urlpatterns = [
     # Panel de administración de Django

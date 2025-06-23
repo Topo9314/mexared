@@ -1,0 +1,172 @@
+{% extends "layout/base_distribuidor.html" %}
+{% load i18n static %}
+
+{% block title %}
+    {{ title }} | MexaRed
+{% endblock %}
+
+{% block extra_head %}
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .table-container {
+            overflow-x: auto;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow);
+            margin-bottom: 1.5rem;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+        .table th, .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .table th {
+            background: #f9fafb;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        .table tbody tr:hover {
+            background: rgba(168, 85, 247, 0.05);
+        }
+        .no-wallet {
+            color: #dc2626;
+            font-style: italic;
+        }
+        .total-row {
+            font-weight: bold;
+            background: #f3f4f6;
+        }
+        @media (max-width: 768px) {
+            .table-container {
+                overflow-x: auto;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="header">
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                {{ title_section }}
+            </h2>
+        </div>
+
+        <!-- Resumen del Distribuidor -->
+        <div class="table-container">
+            <table class="table" aria-label="{% trans 'Resumen del distribuidor' %}">
+                <thead>
+                    <tr>
+                        <th>{% trans "Usuario" %}</th>
+                        <th>{% trans "Saldo Total (MXN)" %}</th>
+                        <th>{% trans "Saldo Bloqueado (MXN)" %}</th>
+                        <th>{% trans "Saldo Disponible (MXN)" %}</th>
+                        <th>{% trans "Estado" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ distribuidor.username }}</td>
+                        <td>${{ summary.distribuidor.balance|floatformat:2 }}</td>
+                        <td>${{ summary.distribuidor.blocked|floatformat:2 }}</td>
+                        <td>${{ summary.distribuidor.available|floatformat:2 }}</td>
+                        <td>
+                            {% if summary.distribuidor.has_wallet %}
+                                {% trans "Activa" %}
+                            {% else %}
+                                <span class="no-wallet">{% trans "Sin billetera" %}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Subcuentas -->
+        <div class="table-container">
+            <table class="table" aria-label="{% trans 'Subcuentas del distribuidor' %}">
+                <thead>
+                    <tr>
+                        <th>{% trans "Usuario" %}</th>
+                        <th>{% trans "Rol" %}</th>
+                        <th>{% trans "Saldo Total (MXN)" %}</th>
+                        <th>{% trans "Saldo Bloqueado (MXN)" %}</th>
+                        <th>{% trans "Saldo Disponible (MXN)" %}</th>
+                        <th>{% trans "Estado" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for account in summary.subaccounts.accounts %}
+                        <tr>
+                            <td>{{ account.username }}</td>
+                            <td>{{ account.rol }}</td>
+                            <td>${{ account.balance|floatformat:2 }}</td>
+                            <td>${{ account.blocked|floatformat:2 }}</td>
+                            <td>${{ account.available|floatformat:2 }}</td>
+                            <td>
+                                {% if account.has_wallet %}
+                                    {% trans "Activa" %}
+                                {% else %}
+                                    <span class="no-wallet">{% trans "Sin billetera" %}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-gray-500 dark:text-gray-400">
+                                {% trans "No hay subcuentas registradas." %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    <tr class="total-row">
+                        <td>{% trans "Total Subcuentas" %}</td>
+                        <td>-</td>
+                        <td>${{ summary.subaccounts.balance|floatformat:2 }}</td>
+                        <td>${{ summary.subaccounts.blocked|floatformat:2 }}</td>
+                        <td>${{ summary.subaccounts.available|floatformat:2 }}</td>
+                        <td>{{ summary.subaccounts.count }} {% trans "cuentas" %}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Total Consolidado -->
+        <div class="table-container">
+            <table class="table" aria-label="{% trans 'Total consolidado' %}">
+                <thead>
+                    <tr>
+                        <th>{% trans "Descripción" %}</th>
+                        <th>{% trans "Saldo Total (MXN)" %}</th>
+                        <th>{% trans "Saldo Bloqueado (MXN)" %}</th>
+                        <th>{% trans "Saldo Disponible (MXN)" %}</th>
+                        <th>{% trans "Total Usuarios" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="total-row">
+                        <td>{% trans "Total Consolidado" %}</td>
+                        <td>${{ summary.total_consolidado.balance|floatformat:2 }}</td>
+                        <td>${{ summary.total_consolidado.blocked|floatformat:2 }}</td>
+                        <td>${{ summary.total_consolidado.available|floatformat:2 }}</td>
+                        <td>{{ summary.total_consolidado.total_users }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

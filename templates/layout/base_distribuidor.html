@@ -1,0 +1,689 @@
+{% load static i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="theme-color" content="#00A862">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>{% block title %}{% translate "Distribuidor | MexaRed" %}{% endblock %}</title>
+    <meta name="description" content="{% block description %}{% translate "Panel de distribuidor MexaRed - Gestión avanzada y eficiente" %}{% endblock %}">
+    <meta name="keywords" content="MexaRed, distribuidor, gestión, ventas, telecomunicaciones, panel">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="author" content="MexaRed Team">
+    <link rel="icon" href="{% static 'img/favicon.ico' %}" type="image/x-icon">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        :root {
+            --mexared-green: #00A862;
+            --mexared-orange: #FF5722;
+            --mexared-blue: #2196F3;
+            --white: #FFFFFF;
+            --dark-bg: #0F172A;
+            --dark-sidebar: #1E293B;
+            --gray-dark: #1F2937;
+            --gray-medium: #64748B;
+            --gray-light: #F3F4F6;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --shadow-dark: rgba(0, 0, 0, 0.2);
+            --transition-speed: 0.3s;
+            --font-size-xs: 12px;
+            --font-size-sm: 14px;
+            --font-size-md: 16px;
+            --font-size-lg: 18px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--white);
+            color: var(--gray-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-size: var(--font-size-md);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body.dark-mode {
+            background: var(--dark-bg);
+            color: var(--gray-dark);
+        }
+
+        body.dark-mode .sidebar {
+            background: var(--dark-sidebar);
+            border-right-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark-mode .main-content {
+            background: var(--dark-bg);
+        }
+
+        body.dark-mode .topbar,
+        body.dark-mode .content {
+            background: var(--dark-sidebar);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+        }
+
+        body.dark-mode .welcome,
+        body.dark-mode .menu a,
+        body.dark-mode .bottom-nav ul li a {
+            color: var(--white);
+        }
+
+        body.dark-mode .menu a:hover,
+        body.dark-mode .bottom-nav ul li a:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Loader */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--white);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        body.dark-mode .loader {
+            background: var(--dark-bg);
+        }
+
+        .loader.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader::after {
+            content: '';
+            width: 36px;
+            height: 36px;
+            border: 4px solid var(--gray-light);
+            border-top: 4px solid var(--mexared-green);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--white);
+            border-right: 1px solid var(--gray-light);
+            padding: 20px;
+            position: fixed;
+            height: 100%;
+            transition: transform var(--transition-speed) ease-in-out;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--gray-light);
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 10px 0;
+        }
+
+        .sidebar .logo img {
+            width: 160px;
+            height: auto;
+            transition: transform var(--transition-speed) ease;
+        }
+
+        .sidebar .logo img:hover {
+            transform: scale(1.05);
+        }
+
+        .sidebar .menu ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar .menu li {
+            margin: 8px 0;
+        }
+
+        .sidebar .menu a {
+            text-decoration: none;
+            color: var(--gray-dark);
+            font-size: var(--font-size-md);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .sidebar .menu a:hover {
+            background: var(--gray-light);
+            color: var(--mexared-blue);
+        }
+
+        .sidebar .menu a.active {
+            background: var(--mexared-green);
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        .sidebar .menu a i {
+            font-size: 1.2rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            padding: 30px 40px;
+            background: var(--white);
+            transition: margin-left var(--transition-speed) ease-in-out;
+        }
+
+        /* Topbar */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: var(--white);
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px var(--shadow-light);
+            position: sticky;
+            top: 20px;
+            z-index: 900;
+        }
+
+        .welcome {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            color: var(--gray-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .welcome strong {
+            color: var(--mexared-orange);
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            font-size: 1.3rem;
+            color: var(--gray-dark);
+            padding: 8px;
+            border-radius: 50%;
+            transition: background var(--transition-speed) ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--gray-light);
+        }
+
+        body.dark-mode .theme-toggle {
+            color: var(--white);
+        }
+
+        /* Content Section */
+        .content {
+            background: var(--white);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow-light);
+            transition: box-shadow var(--transition-speed) ease;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 2rem;
+            padding: 12px;
+            text-align: center;
+            font-size: var(--font-size-sm);
+            color: var(--gray-medium);
+            background: var(--white);
+            border-radius: 8px;
+        }
+
+        body.dark-mode .footer {
+            background: var(--dark-sidebar);
+            color: var(--gray-medium);
+        }
+
+        /* Hamburger Menu */
+        .hamburger {
+            display: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--gray-dark);
+            padding: 8px;
+            border-radius: 50%;
+            transition: background var(--transition-speed) ease;
+        }
+
+        .hamburger:hover {
+            background: var(--gray-light);
+        }
+
+        body.dark-mode .hamburger {
+            color: var(--white);
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--white);
+            padding: 8px 0;
+            box-shadow: 0 -2px 8px var(--shadow-light);
+            z-index: 1000;
+        }
+
+        .bottom-nav ul {
+            display: flex;
+            justify-content: space-around;
+            list-style: none;
+            padding: 0;
+        }
+
+        .bottom-nav ul li a {
+            text-decoration: none;
+            color: var(--gray-dark);
+            font-size: var(--font-size-sm);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .bottom-nav ul li a i {
+            font-size: 1.1rem;
+        }
+
+        .bottom-nav ul li a:hover {
+            background: var(--gray-light);
+            color: var(--mexared-blue);
+        }
+
+        .bottom-nav ul li a.active {
+            background: var(--mexared-green);
+            color: var(--white);
+        }
+
+        /* Media Queries */
+        @media (max-width: 1024px) {
+            .hamburger {
+                display: block;
+                position: fixed;
+                top: 12px;
+                left: 12px;
+            }
+
+            .sidebar {
+                transform: translateX(-260px);
+                width: 240px;
+                box-shadow: 4px 0 12px var(--shadow-dark);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 24px 32px;
+            }
+
+            .topbar {
+                padding: 12px 20px;
+            }
+
+            .welcome {
+                font-size: var(--font-size-md);
+            }
+
+            .content {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .bottom-nav {
+                display: flex;
+            }
+
+            .main-content {
+                padding: 20px 24px;
+            }
+
+            .topbar {
+                padding: 10px 16px;
+            }
+
+            .welcome {
+                font-size: var(--font-size-sm);
+            }
+
+            .content {
+                padding: 16px;
+            }
+
+            .footer {
+                padding: 8px;
+                font-size: var(--font-size-xs);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .welcome {
+                font-size: var(--font-size-xs);
+            }
+
+            .theme-toggle {
+                font-size: 1.2rem;
+            }
+
+            .content {
+                padding: 12px;
+            }
+
+            .bottom-nav ul li a {
+                font-size: var(--font-size-xs);
+            }
+
+            .bottom-nav ul li a i {
+                font-size: 1rem;
+            }
+        }
+
+        /* Focus and Accessibility */
+        :focus {
+            outline: 2px solid var(--mexared-blue);
+            outline-offset: 2px;
+        }
+
+        .sidebar .menu a:focus,
+        .bottom-nav ul li a:focus {
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.3);
+        }
+
+        /* Print Styles */
+        @media print {
+            .sidebar, .topbar, .hamburger, .theme-toggle, .footer, .bottom-nav {
+                display: none !important;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 0;
+            }
+
+            .content {
+                box-shadow: none;
+                border: none;
+                background: none;
+                padding: 0;
+            }
+        }
+
+        /* Notifications */
+        .toast-container {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            background: var(--mexared-blue);
+            color: var(--white);
+            padding: 10px 16px;
+            border-radius: 8px;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all var(--transition-speed) ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px var(--shadow-dark);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.error {
+            background: #EF4444;
+        }
+
+        .toast.success {
+            background: var(--mexared-green);
+        }
+
+        .toast i {
+            font-size: 1rem;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="loader" id="loader"></div>
+    {% if not request.user.is_authenticated or request.user.rol != "distribuidor" %}
+        <script>window.location.href = "{% url 'users:login' %}";</script>
+    {% endif %}
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="{% static 'img/mexared-logo.png' %}" alt="MexaRed Logo">
+            </div>
+            <nav class="menu">
+                <ul>
+                    <li><a href="{% url 'users:panel_distribuidor' %}" class="{% if request.path == '/distribuidor/panel/' %}active{% endif %}" aria-label="{% translate 'Ir al inicio' %}"><i class="fa-solid fa-house"></i> {% translate "Inicio" %}</a></li>
+                    <li><a href="{% url 'users:editar_perfil_distribuidor' %}" class="{% if request.path == '/distribuidor/editar-perfil/' %}active{% endif %}" aria-label="{% translate 'Ir al perfil' %}"><i class="fa-solid fa-user"></i> {% translate "Perfil" %}</a></li>
+                    <li><a href="{% url 'vendedores:lista' %}" class="{% if request.path == '/vendedores/lista/' %}active{% endif %}" aria-label="{% translate 'Gestionar vendedores asignados' %}"><i class="fa-solid fa-users-gear"></i> {% translate "Gestionar Vendedores" %}</a></li>
+                    <li><a href="{% url 'vendedores:crear' %}" class="{% if request.path == '/vendedores/crear/' %}active{% endif %}" aria-label="{% translate 'Crear un nuevo vendedor' %}"><i class="fa-solid fa-user-plus"></i> {% translate "Añadir Vendedor" %}</a></li>
+                    <li><a href="{% url 'transacciones:listar' %}" class="{% if request.path == '/transacciones/' %}active{% endif %}" aria-label="{% translate 'Ver historial de transacciones' %}"><i class="fa-solid fa-money-check-dollar"></i> {% translate "Historial de Transacciones" %}</a></li>
+                    <li><a href="{% url 'lineas:list' %}" class="{% if request.path == '/lineas/' %}active{% endif %}" aria-label="{% translate 'Administrar Líneas' %}"><i class="fa-solid fa-sim-card"></i> {% translate "Administrar Líneas" %}</a></li>
+                    <li><a href="{% url 'wallet:dashboard' %}" class="{% if request.path == '/wallet/' %}active{% endif %}" aria-label="{% translate 'Mi Billetera' %}"><i class="fa-solid fa-wallet"></i> {% translate "Mi Billetera" %}</a></li>
+                    <li><a href="{% url 'ofertas:distributor_dashboard' %}" class="{% if request.path == '/ofertas/distributor/' or request.path == '/ofertas/distributor/my-offers/' or request.path == '/ofertas/distributor/offer/1/detail/' or request.path == '/ofertas/distributor/vendedor/1/assign-margin/' or request.path == '/ofertas/distributor/vendedor-margins/' or request.path == '/ofertas/distributor/profitability/' or request.path == '/ofertas/distributor/sales-summary/' or request.path == '/ofertas/update-margin/1/' %}active{% endif %}" aria-label="{% translate 'Panel de Ofertas' %}"><i class="fa-solid fa-gift"></i> {% translate "Panel de Ofertas" %}</a></li>
+                    <li><a href="{% url 'activaciones:listado_activaciones' %}" class="{% if request.path == '/activaciones/' %}active{% endif %}" aria-label="{% translate 'Gestión de Activaciones' %}"><i class="fa-solid fa-power-off"></i> {% translate "Gestión de Activaciones" %}</a></li>
+                    <li><a href="{% url 'wallet:ledger_global' %}" class="{% if request.path == '/wallet/ledger/' or request.path == '/wallet/ledger/distribuidor/1/' %}active{% endif %}" aria-label="{% translate 'Ledger Global' %}"><i class="fa-solid fa-book"></i> {% translate "Ledger Global" %}</a></li>
+                    <li><a href="#" class="{% if request.path == '/configuraciones/' %}active{% endif %}" aria-label="{% translate 'Ir a configuraciones' %}"><i class="fa-solid fa-gear"></i> {% translate "Configuraciones" %}</a></li>
+                    <li><a href="{% url 'users:logout' %}" aria-label="{% translate 'Cerrar sesión' %}"><i class="fa-solid fa-right-from-bracket"></i> {% translate "Salir" %}</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="hamburger" onclick="toggleSidebar()">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            <header class="topbar">
+                <div class="welcome">
+                    {% if request.user.is_authenticated and not welcome_shown %}
+                        {% translate "Bienvenido" %}, <strong>{{ request.user.first_name }}</strong> 👋
+                    {% endif %}
+                </div>
+                <div class="theme-toggle" onclick="toggleTheme()" aria-label="{% translate 'Cambiar tema' %}">
+                    <i class="fa-solid fa-moon"></i>
+                </div>
+            </header>
+
+            <section class="content">
+                {% block content %}
+                {% endblock %}
+            </section>
+
+            <footer class="footer">
+                {% translate "©" %} {% now "Y" %} MexaRed. {% translate "Todos los derechos reservados." %}
+            </footer>
+
+            <nav class="bottom-nav">
+                <ul>
+                    <li><a href="{% url 'users:panel_distribuidor' %}" class="{% if request.path == '/distribuidor/panel/' %}active{% endif %}" aria-label="{% translate 'Ir al inicio' %}"><i class="fa-solid fa-house"></i><span>{% translate "Inicio" %}</span></a></li>
+                    <li><a href="{% url 'users:editar_perfil_distribuidor' %}" class="{% if request.path == '/distribuidor/editar-perfil/' %}active{% endif %}" aria-label="{% translate 'Ir al perfil' %}"><i class="fa-solid fa-user"></i><span>{% translate "Perfil" %}</span></a></li>
+                    <li><a href="{% url 'vendedores:lista' %}" class="{% if request.path == '/vendedores/lista/' %}active{% endif %}" aria-label="{% translate 'Gestionar vendedores asignados' %}"><i class="fa-solid fa-users-gear"></i><span>{% translate "Gestionar Vendedores" %}</span></a></li>
+                    <li><a href="{% url 'vendedores:crear' %}" class="{% if request.path == '/vendedores/crear/' %}active{% endif %}" aria-label="{% translate 'Crear un nuevo vendedor' %}"><i class="fa-solid fa-user-plus"></i><span>{% translate "Añadir Vendedor" %}</span></a></li>
+                    <li><a href="{% url 'transacciones:listar' %}" class="{% if request.path == '/transacciones/' %}active{% endif %}" aria-label="{% translate 'Ver historial de transacciones' %}"><i class="fa-solid fa-money-check-dollar"></i><span>{% translate "Historial de Transacciones" %}</span></a></li>
+                    <li><a href="{% url 'lineas:list' %}" class="{% if request.path == '/lineas/' %}active{% endif %}" aria-label="{% translate 'Administrar Líneas' %}"><i class="fa-solid fa-sim-card"></i><span>{% translate "Administrar Líneas" %}</span></a></li>
+                    <li><a href="{% url 'wallet:dashboard' %}" class="{% if request.path == '/wallet/' %}active{% endif %}" aria-label="{% translate 'Mi Billetera' %}"><i class="fa-solid fa-wallet"></i><span>{% translate "Mi Billetera" %}</span></a></li>
+                    <li><a href="{% url 'ofertas:distributor_dashboard' %}" class="{% if request.path == '/ofertas/distributor/' or request.path == '/ofertas/distributor/my-offers/' or request.path == '/ofertas/distributor/offer/1/detail/' or request.path == '/ofertas/distributor/vendedor/1/assign-margin/' or request.path == '/ofertas/distributor/vendedor-margins/' or request.path == '/ofertas/distributor/profitability/' or request.path == '/ofertas/distributor/sales-summary/' or request.path == '/ofertas/update-margin/1/' %}active{% endif %}" aria-label="{% translate 'Panel de Ofertas' %}"><i class="fa-solid fa-gift"></i><span>{% translate "Panel de Ofertas" %}</span></a></li>
+                    <li><a href="{% url 'activaciones:listado_activaciones' %}" class="{% if request.path == '/activaciones/' %}active{% endif %}" aria-label="{% translate 'Gestión de Activaciones' %}"><i class="fa-solid fa-power-off"></i><span>{% translate "Gestión de Activaciones" %}</span></a></li>
+                    <li><a href="{% url 'wallet:ledger_global' %}" class="{% if request.path == '/wallet/ledger/' or request.path == '/wallet/ledger/distribuidor/1/' %}active{% endif %}" aria-label="{% translate 'Ledger Global' %}"><i class="fa-solid fa-book"></i><span>{% translate "Ledger Global" %}</span></a></li>
+                    <li><a href="#" class="{% if request.path == '/configuraciones/' %}active{% endif %}" aria-label="{% translate 'Ir a configuraciones' %}"><i class="fa-solid fa-gear"></i><span>{% translate "Configuraciones" %}</span></a></li>
+                    <li><a href="{% url 'users:logout' %}" aria-label="{% translate 'Cerrar sesión' %}"><i class="fa-solid fa-right-from-bracket"></i><span>{% translate "Salir" %}</span></a></li>
+                </ul>
+            </nav>
+        </main>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // Page Load and Loader Management
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('loader');
+            loader.classList.add('fade-out');
+            setTimeout(() => loader.remove(), 400);
+            if (!sessionStorage.getItem('welcomeShown')) {
+                showToast("{% translate 'Bienvenido a MexaRed' %}", 'success');
+                sessionStorage.setItem('welcomeShown', 'true');
+            }
+        });
+
+        // Toggle Sidebar
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const bottomNav = document.querySelector('.bottom-nav');
+            sidebar.classList.toggle('active');
+            document.body.classList.toggle('sidebar-open');
+            if (window.innerWidth <= 768) {
+                bottomNav.style.display = sidebar.classList.contains('active') ? 'none' : 'flex';
+            }
+        }
+
+        // Toggle Theme
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', body.classList.contains('dark-mode'));
+            const icon = document.querySelector('.theme-toggle i');
+            icon.classList.toggle('fa-sun');
+            icon.classList.toggle('fa-moon');
+        }
+
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            document.querySelector('.theme-toggle i').classList.replace('fa-moon', 'fa-sun');
+        }
+
+        // Notifications
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.innerHTML = `<i class="fa-solid fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+            toastContainer.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Handle Clicks Outside Sidebar
+        document.addEventListener('click', (e) => {
+            const sidebar = document.querySelector('.sidebar');
+            const hamburger = document.querySelector('.hamburger');
+            const bottomNav = document.querySelector('.bottom-nav');
+            if (window.innerWidth <= 768 && sidebar.classList.contains('active') && !sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+                sidebar.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
+                bottomNav.style.display = 'flex';
+            }
+        });
+
+        // Detect Active Section
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuLinks = document.querySelectorAll('.menu a, .bottom-nav ul li a');
+            menuLinks.forEach(link => {
+                if (link.href === window.location.href || (link.href === window.location.pathname && !window.location.search)) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // Dynamic Resize Adjustment
+        window.addEventListener('resize', () => {
+            const sidebar = document.querySelector('.sidebar');
+            const bottomNav = document.querySelector('.bottom-nav');
+            if (window.innerWidth <= 768) {
+                sidebar.style.display = 'none';
+                bottomNav.style.display = 'flex';
+                if (sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                    document.body.classList.remove('sidebar-open');
+                }
+            } else {
+                sidebar.style.display = 'block';
+                bottomNav.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

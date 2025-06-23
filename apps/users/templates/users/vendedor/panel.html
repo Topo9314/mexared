@@ -1,0 +1,372 @@
+{% extends 'layout/base_vendedor.html' %}
+
+{% load static i18n %}
+
+{% block title %}
+    {% trans "Inicio Vendedor" %} | MexaRed
+{% endblock %}
+
+{% block content %}
+<style>
+    .dashboard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        padding: 24px 0;
+    }
+
+    .card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 24px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        animation: fadeInCard 0.5s ease-out;
+    }
+
+    @keyframes fadeInCard {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .card h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .card .highlight {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #f472b6; /* Pastel red variant */
+    }
+
+    .card p {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 8px;
+    }
+
+    .quick-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .action-btn {
+        background: linear-gradient(to right, #f472b6, #a78bfa); /* Pastel red to pastel purple */
+        color: #ffffff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
+    }
+
+    .recent-transactions {
+        margin-top: 24px;
+    }
+
+    .recent-transactions h4 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 16px;
+    }
+
+    .transaction-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .transaction-item:last-child {
+        border-bottom: none;
+    }
+
+    .transaction-item .date {
+        font-size: 0.875rem;
+        color: #6b7280;
+        flex: 1;
+    }
+
+    .transaction-item .client {
+        font-size: 0.875rem;
+        color: #1f2937;
+        flex: 2;
+    }
+
+    .transaction-item .amount {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #10b981;
+        flex: 1;
+        text-align: right;
+    }
+
+    .transaction-item .status {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 12px;
+        flex: 1;
+        text-align: center;
+    }
+
+    .status-completed {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-failed {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .chart-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+        aspect-ratio: 2 / 1;
+        background: transparent;
+    }
+
+    .card-chart canvas {
+        width: 100% !important;
+        height: auto !important;
+        display: block;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .dashboard {
+            grid-template-columns: 1fr;
+        }
+
+        .card {
+            padding: 16px;
+        }
+
+        .card h3 {
+            font-size: 1.125rem;
+        }
+
+        .action-btn {
+            font-size: 0.8125rem;
+            padding: 8px 16px;
+        }
+
+        .transaction-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .transaction-item .date,
+        .transaction-item .client,
+        .transaction-item .amount,
+        .transaction-item .status {
+            text-align: left;
+            flex: none;
+        }
+    }
+
+    /* Accessibility */
+    .action-btn:focus {
+        outline: 2px solid #a78bfa;
+        outline-offset: 2px;
+    }
+</style>
+
+<div class="max-w-7xl mx-auto">
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">{% trans "Panel de Vendedor" %}</h2>
+    <p class="text-gray-600 mb-6">{% trans "Consulta tus métricas, recargas y clientes captados en tiempo real." %}</p>
+
+    <!-- KPIs -->
+    <div class="dashboard">
+        <!-- Ventas del Día -->
+        <div class="card">
+            <h3><i class="fas fa-wallet text-2xl text-pink-400"></i> {% trans "Ventas del Día" %}</h3>
+            <p>{% trans "Total vendido hoy" %}</p>
+            <p class="highlight" id="dailySales">$0.00</p>
+        </div>
+
+        <!-- Recargas Realizadas -->
+        <div class="card">
+            <h3><i class="fas fa-money-bill-wave text-2xl text-purple-400"></i> {% trans "Recargas Realizadas" %}</h3>
+            <p>{% trans "Recargas hoy" %}</p>
+            <p class="highlight" id="rechargesToday">0</p>
+        </div>
+
+        <!-- Clientes Captados -->
+        <div class="card">
+            <h3><i class="fas fa-users text-2xl text-blue-400"></i> {% trans "Clientes Captados" %}</h3>
+            <p>{% trans "Total de clientes" %}</p>
+            <p class="highlight" id="clientsCaptured">0</p>
+            <div class="quick-actions">
+                <a href="{% url 'users:registrar_cliente_por_vendedor' %}" class="action-btn" aria-label="{% trans 'Registrar nuevo cliente' %}">
+                    <i class="fas fa-user-plus"></i> {% trans "Registrar Cliente" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Comisión Estimada -->
+        <div class="card">
+            <h3><i class="fas fa-dollar-sign text-2xl text-green-400"></i> {% trans "Comisión Estimada" %}</h3>
+            <p>{% trans "Este mes" %}</p>
+            <p class="highlight" id="estimatedCommission">$0.00</p>
+            <div class="quick-actions">
+                <a href="{% url 'users:historial_comisiones' %}" class="action-btn" aria-label="{% trans 'Ver comisiones' %}">
+                    <i class="fas fa-chart-line"></i> {% trans "Ver Detalles" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Gráfico de Recargas -->
+        <div class="card card-chart col-span-1 md:col-span-2 xl:col-span-3">
+            <h3><i class="fas fa-chart-bar text-2xl text-indigo-400"></i> {% trans "Recargas Semanales" %}</h3>
+            <div class="chart-wrapper">
+                <canvas id="grafica_recargas"></canvas>
+            </div>
+        </div>
+
+        <!-- Historial Rápido -->
+        <div class="card recent-transactions col-span-1 md:col-span-2 xl:col-span-1">
+            <h3><i class="fas fa-history text-2xl text-gray-400"></i> {% trans "Últimas Recargas" %}</h3>
+            <div>
+                <h4>{% trans "Últimas 5 recargas" %}</h4>
+                <div class="transaction-item">
+                    <span class="date">2025-06-01</span>
+                    <span class="client">Juan Pérez</span>
+                    <span class="amount">$200.00</span>
+                    <span class="status status-completed">{% trans "Completada" %}</span>
+                </div>
+                <div class="transaction-item">
+                    <span class="date">2025-06-01</span>
+                    <span class="client">María Gómez</span>
+                    <span class="amount">$150.00</span>
+                    <span class="status status-failed">{% trans "Fallida" %}</span>
+                </div>
+                <div class="transaction-item">
+                    <span class="date">2025-05-31</span>
+                    <span class="client">Carlos López</span>
+                    <span class="amount">$300.00</span>
+                    <span class="status status-completed">{% trans "Completada" %}</span>
+                </div>
+                <div class="transaction-item">
+                    <span class="date">2025-05-31</span>
+                    <span class="client">Ana Martínez</span>
+                    <span class="amount">$100.00</span>
+                    <span class="status status-completed">{% trans "Completada" %}</span>
+                </div>
+                <div class="transaction-item">
+                    <span class="date">2025-05-30</span>
+                    <span class="client">Luis Fernández</span>
+                    <span class="amount">$250.00</span>
+                    <span class="status status-completed">{% trans "Completada" %}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="mt-8">
+        <h3 class="text-xl font-semibold text-gray-900 mb-4">{% trans "Acciones Rápidas" %}</h3>
+        <div class="quick-actions">
+            <a href="{% url 'users:registrar_cliente_por_vendedor' %}" class="action-btn" aria-label="{% trans 'Hacer nueva recarga' %}">
+                <i class="fas fa-money-bill-wave"></i> {% trans "Hacer Nueva Recarga" %}
+            </a>
+            <a href="{% url 'users:historial_comisiones' %}" class="action-btn" aria-label="{% trans 'Ver historial completo' %}">
+                <i class="fas fa-history"></i> {% trans "Ver Historial Completo" %}
+            </a>
+            <a href="{% url 'users:registrar_cliente_por_vendedor' %}" class="action-btn" aria-label="{% trans 'Invitar cliente nuevo' %}">
+                <i class="fas fa-user-plus"></i> {% trans "Invitar Cliente Nuevo" %}
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Placeholder data (replace with real API data)
+        const data = {
+            dailySales: 1200.50,
+            rechargesToday: 8,
+            clientsCaptured: 15,
+            estimatedCommission: 350.75
+        };
+
+        // Update KPIs
+        document.getElementById('dailySales').textContent = `$${data.dailySales.toFixed(2)}`;
+        document.getElementById('rechargesToday').textContent = data.rechargesToday;
+        document.getElementById('clientsCaptured').textContent = data.clientsCaptured;
+        document.getElementById('estimatedCommission').textContent = `$${data.estimatedCommission.toFixed(2)}`;
+
+        // Chart.js for weekly recharges
+        const ctx = document.getElementById('grafica_recargas').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['{% trans "Lun" %}', '{% trans "Mar" %}', '{% trans "Mié" %}', '{% trans "Jue" %}', '{% trans "Vie" %}', '{% trans "Sáb" %}', '{% trans "Dom" %}'],
+                datasets: [{
+                    label: '{% trans "Recargas" %}',
+                    data: [5, 8, 4, 9, 3, 6, 2],
+                    backgroundColor: '#FFB6C1',
+                    borderColor: '#f472b6',
+                    borderWidth: 1,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1f2937',
+                        titleFont: { size: 12, family: 'Inter' },
+                        bodyFont: { size: 12, family: 'Inter' }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#6b7280',
+                            font: { size: 12, family: 'Inter' }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#6b7280',
+                            font: { size: 12, family: 'Inter' }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,823 @@
+{% extends 'layout/base_distribuidor.html' %}
+{% load i18n static %}
+
+{% block title %}
+    {% trans "Historial de Transacciones" %} | MexaRed
+{% endblock %}
+
+{% block extra_head %}
+    <style>
+        :root {
+            --primary-red: #f43f5e;
+            --primary-purple: #a855f7;
+            --text-gray: #6b7280;
+            --white: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.05);
+            --dark-bg: #1f2a44;
+            --dark-content: #2e3a59;
+            --dark-text-light: #d1d5db;
+            --error-red: #ef4444;
+            --success-green: #10b981;
+            --warning-yellow: #f59e0b;
+            --neutral-gray: #6b7280;
+        }
+
+        .container-transacciones {
+            max-width: 1280px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .header-section h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .dark-mode .header-section h2 {
+            color: var(--dark-text-light);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px var(--shadow);
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .dark-mode .stat-card {
+            background: rgba(46, 58, 89, 0.95);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-card p {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+
+        .dark-mode .stat-card p {
+            color: #9ca3af;
+        }
+
+        .stat-card span {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .dark-mode .stat-card span {
+            color: var(--dark-text-light);
+        }
+
+        .filter-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px var(--shadow);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .dark-mode .filter-section {
+            background: rgba(46, 58, 89, 0.95);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+        }
+
+        .filter-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #1f2937;
+        }
+
+        .dark-mode .form-label {
+            color: var(--dark-text-light);
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background: #ffffff;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+        }
+
+        .dark-mode .form-input,
+        .dark-mode .form-select {
+            background: var(--dark-bg);
+            border-color: #4b5563;
+            color: var(--dark-text-light);
+        }
+
+        .filter-button {
+            background: linear-gradient(135deg, var(--primary-red), var(--primary-purple));
+            color: var(--white);
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+        }
+
+        .filter-button:hover {
+            background: linear-gradient(135deg, #e11d48, #9333ea);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .dark-mode .table-container {
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+        }
+
+        .transaccion-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .dark-mode .transaccion-table {
+            background: rgba(46, 58, 89, 0.95);
+        }
+
+        .transaccion-table th,
+        .transaccion-table td {
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+
+        .transaccion-table th {
+            background: #f3f4f6;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .dark-mode .transaccion-table th {
+            background: var(--dark-content);
+            color: var(--dark-text-light);
+        }
+
+        .transaccion-table tr {
+            border-bottom: 1px solid #e5e7eb;
+            transition: background 0.3s ease;
+        }
+
+        .dark-mode .transaccion-table tr {
+            border-bottom: 1px solid #374151;
+        }
+
+        .transaccion-table tr:hover {
+            background: #f9fafb;
+        }
+
+        .dark-mode .transaccion-table tr:hover {
+            background: #2e3a59;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .status-pendiente {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .status-exitosa {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-fallida {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-cancelada {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        .dark-mode .status-pendiente {
+            background: #78350f;
+            color: #fde68a;
+        }
+
+        .dark-mode .status-exitosa {
+            background: #064e3b;
+            color: #6ee7b7;
+        }
+
+        .dark-mode .status-fallida {
+            background: #7f1d1d;
+            color: #fecaca;
+        }
+
+        .dark-mode .status-cancelada {
+            background: #374151;
+            color: #9ca3af;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1rem;
+            color: #6b7280;
+        }
+
+        .dark-mode .no-data {
+            color: #9ca3af;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .pagination ul {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .pagination li a,
+        .pagination li span {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.95rem;
+            transition: background 0.3s ease;
+        }
+
+        .pagination li a {
+            background: #e5e7eb;
+            color: #1f2937;
+        }
+
+        .pagination li a:hover {
+            background: #d1d5db;
+        }
+
+        .pagination li span {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .dark-mode .pagination li a {
+            background: #4b5563;
+            color: var(--dark-text-light);
+        }
+
+        .dark-mode .pagination li a:hover {
+            background: #6b7280;
+        }
+
+        .dark-mode .pagination li span {
+            background: #374151;
+            color: #9ca3af;
+        }
+
+        .batch-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            justify-content: flex-end;
+        }
+
+        .batch-action-button {
+            background: #e5e7eb;
+            color: #1f2937;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.3s ease, transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .batch-action-button:hover {
+            background: #d1d5db;
+            transform: translateY(-2px);
+        }
+
+        .dark-mode .batch-action-button {
+            background: #4b5563;
+            color: var(--dark-text-light);
+        }
+
+        .dark-mode .batch-action-button:hover {
+            background: #6b7280;
+        }
+
+        .admin-button {
+            background: linear-gradient(135deg, var(--primary-red), var(--primary-purple));
+            color: var(--white);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+        }
+
+        .admin-button:hover {
+            background: linear-gradient(135deg, #e11d48, #9333ea);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+        }
+
+        .ai-insights {
+            margin-top: 2rem;
+            background: #eff6ff;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            text-align: center;
+        }
+
+        .dark-mode .ai-insights {
+            background: #1e3a8a;
+        }
+
+        .ai-insights strong {
+            color: #1e40af;
+            font-size: 1.1rem;
+        }
+
+        .dark-mode .ai-insights strong {
+            color: #93c5fd;
+        }
+
+        .ai-insights p {
+            color: #1e40af;
+            font-size: 0.95rem;
+        }
+
+        .dark-mode .ai-insights p {
+            color: #bfdbfe;
+        }
+
+        .mobile-card {
+            display: none;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px var(--shadow);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            background: rgba(255, 255, 255, 0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .dark-mode .mobile-card {
+            background: rgba(46, 58, 89, 0.95);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+        }
+
+        .mobile-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .mobile-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .mobile-card-header span {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .dark-mode .mobile-card-header span {
+            color: var(--dark-text-light);
+        }
+
+        .mobile-card-header .date {
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        .dark-mode .mobile-card-header .date {
+            color: #9ca3af;
+        }
+
+        .mobile-card-body p {
+            font-size: 0.95rem;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .dark-mode .mobile-card-body p {
+            color: var(--dark-text-light);
+        }
+
+        .mobile-card-body p strong {
+            color: #1f2937;
+        }
+
+        .dark-mode .mobile-card-body p strong {
+            color: var(--dark-text-light);
+        }
+
+        @media (max-width: 768px) {
+            .container-transacciones {
+                padding: 0 1rem;
+                margin: 1rem auto;
+            }
+
+            .header-section {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .header-section h2 {
+                font-size: 1.5rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-form {
+                grid-template-columns: 1fr;
+            }
+
+            .table-container {
+                display: none;
+            }
+
+            .mobile-card {
+                display: block;
+            }
+
+            .batch-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .batch-action-button,
+            .admin-button {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-section h2 {
+                font-size: 1.25rem;
+            }
+
+            .stat-card {
+                padding: 1rem;
+            }
+
+            .stat-card p {
+                font-size: 0.85rem;
+            }
+
+            .stat-card span {
+                font-size: 1rem;
+            }
+
+            .form-label {
+                font-size: 0.9rem;
+            }
+
+            .form-input,
+            .form-select {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            .filter-button {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .mobile-card {
+                padding: 1rem;
+            }
+        }
+
+        /* Accessibility */
+        .form-input:focus,
+        .form-select:focus,
+        .filter-button:focus,
+        .batch-action-button:focus,
+        .admin-button:focus {
+            outline: 2px solid var(--primary-purple);
+            outline-offset: 2px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container-transacciones">
+    <!-- Encabezado -->
+    <div class="header-section">
+        <h2>{% trans "Historial de Transacciones" %}</h2>
+        {% if request.user.is_superuser %}
+        <a href="{% url 'admin:transacciones_transaccion_changelist' %}" class="admin-button">
+            <i class="fas fa-cog"></i> {% trans "Abrir en Admin" %}
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <p>{% trans "Total Transacciones" %}</p>
+            <span>{{ total_transacciones }}</span>
+        </div>
+        <div class="stat-card">
+            <p>{% trans "Monto Total" %}</p>
+            <span>{{ total_monto|floatformat:2 }} {% if transacciones %}{{ transacciones.0.moneda.codigo }}{% endif %}</span>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-section">
+        <form method="get" class="filter-form" id="filter-form">
+            <div class="form-group">
+                <label for="{{ form.fecha_inicio.id_for_label }}" class="form-label">
+                    {% trans "Desde" %}
+                </label>
+                {{ form.fecha_inicio }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.fecha_fin.id_for_label }}" class="form-label">
+                    {% trans "Hasta" %}
+                </label>
+                {{ form.fecha_fin }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.tipo.id_for_label }}" class="form-label">
+                    {% trans "Tipo" %}
+                </label>
+                {{ form.tipo }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.estado.id_for_label }}" class="form-label">
+                    {% trans "Estado" %}
+                </label>
+                {{ form.estado }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.moneda.id_for_label }}" class="form-label">
+                    {% trans "Moneda" %}
+                </label>
+                {{ form.moneda }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.usuario.id_for_label }}" class="form-label">
+                    {% trans "Usuario" %}
+                </label>
+                {{ form.usuario }}
+            </div>
+            <div class="form-group flex items-end">
+                <button type="submit" class="filter-button">
+                    <i class="fas fa-filter"></i> {% trans "Filtrar" %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Acciones en Lote -->
+    <div class="batch-actions">
+        <button class="batch-action-button" id="download-pdf" disabled>
+            <i class="fas fa-file-pdf"></i> {% trans "Descargar PDF" %}
+        </button>
+        <button class="batch-action-button" id="export-csv" disabled>
+            <i class="fas fa-file-csv"></i> {% trans "Exportar CSV" %}
+        </button>
+        {% if request.user.is_superuser %}
+        <button class="batch-action-button" id="delete-selected" disabled>
+            <i class="fas fa-trash-alt"></i> {% trans "Eliminar Seleccionados" %}
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Tabla de Transacciones -->
+    <div class="table-container">
+        <table class="transaccion-table">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="select-all"></th>
+                    <th>{% trans "UUID" %}</th>
+                    <th>{% trans "Tipo" %}</th>
+                    <th>{% trans "Emisor" %}</th>
+                    <th>{% trans "Receptor" %}</th>
+                    <th>{% trans "Monto" %}</th>
+                    <th>{% trans "Moneda" %}</th>
+                    <th>{% trans "Estado" %}</th>
+                    <th>{% trans "Fecha" %}</th>
+                    <th>{% trans "Acciones" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaccion in transacciones %}
+                <tr>
+                    <td><input type="checkbox" class="select-transaccion" data-id="{{ transaccion.pk }}"></td>
+                    <td>{{ transaccion.uuid|slice:":8" }}</td>
+                    <td>{{ transaccion.get_tipo_display }}</td>
+                    <td>{{ transaccion.emisor.username|default:"—" }}</td>
+                    <td>{{ transaccion.receptor.username|default:"—" }}</td>
+                    <td class="{% if transaccion.tipo == 'RETIRO' or transaccion.tipo == 'CONSUMO_API' %}text-red-600{% else %}text-green-600{% endif %} font-bold">
+                        {% if transaccion.tipo == 'RETIRO' or transaccion.tipo == 'CONSUMO_API' %}-{% endif %}
+                        {{ transaccion.monto|floatformat:2 }}
+                    </td>
+                    <td>{{ transaccion.moneda.codigo }}</td>
+                    <td>
+                        <span class="status-badge status-{{ transaccion.estado|lower }}">{{ transaccion.get_estado_display }}</span>
+                    </td>
+                    <td>{{ transaccion.fecha_creacion|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        <a href="{% url 'transacciones:detalle' transaccion.pk %}" class="text-blue-500 hover:underline">
+                            <i class="fas fa-eye"></i> {% trans "Ver Detalle" %}
+                        </a>
+                    </td>
+                </tr>
+                <!-- Vista para Móviles -->
+                <tr class="mobile-card">
+                    <td colspan="10">
+                        <div class="mobile-card-header">
+                            <span>{{ transaccion.get_tipo_display }}</span>
+                            <span class="date">{{ transaccion.fecha_creacion|date:"M d, H:i" }}</span>
+                        </div>
+                        <div class="mobile-card-body">
+                            <p><strong>{% trans "UUID:" %}</strong> {{ transaccion.uuid|slice:":8" }}</p>
+                            <p><strong>{% trans "Emisor:" %}</strong> {{ transaccion.emisor.username|default:"—" }}</p>
+                            <p><strong>{% trans "Receptor:" %}</strong> {{ transaccion.receptor.username|default:"—" }}</p>
+                            <p><strong>{% trans "Monto:" %}</strong>
+                                <span class="{% if transaccion.tipo == 'RETIRO' or transaccion.tipo == 'CONSUMO_API' %}text-red-600{% else %}text-green-600{% endif %}">
+                                    {% if transaccion.tipo == 'RETIRO' or transaccion.tipo == 'CONSUMO_API' %}-{% endif %}
+                                    {{ transaccion.monto|floatformat:2 }} {{ transaccion.moneda.codigo }}
+                                </span>
+                            </p>
+                            <p><strong>{% trans "Estado:" %}</strong> {{ transaccion.get_estado_display }}</p>
+                            <p>
+                                <a href="{% url 'transacciones:detalle' transaccion.pk %}" class="text-blue-500 hover:underline">
+                                    <i class="fas fa-eye"></i> {% trans "Ver Detalle" %}
+                                </a>
+                            </p>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" class="no-data">
+                        {% trans "No se encontraron transacciones." %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginación -->
+    {% if is_paginated %}
+    <div class="pagination">
+        <nav>
+            <ul>
+                {% if page_obj.has_previous %}
+                <li><a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% trans "Anterior" %}</a></li>
+                {% endif %}
+                <li><span>{% trans "Página" %} {{ page_obj.number }} {% trans "de" %} {{ paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                <li><a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% trans "Siguiente" %}</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+
+    <!-- Sección de IA -->
+    <div class="ai-insights">
+        <strong>{% trans "AI Insights (próximamente):" %}</strong>
+        <p>{% trans "Obtenga sugerencias predictivas sobre transacciones grandes o riesgos potenciales de fraude." %}</p>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const selectAllCheckbox = document.getElementById('select-all');
+        const transaccionCheckboxes = document.querySelectorAll('.select-transaccion');
+        const downloadPdfButton = document.getElementById('download-pdf');
+        const exportCsvButton = document.getElementById('export-csv');
+        const deleteSelectedButton = document.getElementById('delete-selected');
+
+        const updateBatchActions = () => {
+            const selected = Array.from(transaccionCheckboxes).filter(cb => cb.checked).length > 0;
+            downloadPdfButton.disabled = !selected;
+            exportCsvButton.disabled = !selected;
+            if (deleteSelectedButton) {
+                deleteSelectedButton.disabled = !selected;
+            }
+        };
+
+        selectAllCheckbox.addEventListener('change', (e) => {
+            transaccionCheckboxes.forEach(cb => {
+                cb.checked = e.target.checked;
+            });
+            updateBatchActions();
+        });
+
+        transaccionCheckboxes.forEach(cb => {
+            cb.addEventListener('change', updateBatchActions);
+        });
+
+        downloadPdfButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            const selectedIds = Array.from(transaccionCheckboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.dataset.id);
+            if (selectedIds.length > 0) {
+                showToast('{% trans "Descarga de PDF iniciada (próximamente)." %}', 'success');
+            }
+        });
+
+        exportCsvButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            const selectedIds = Array.from(transaccionCheckboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.dataset.id);
+            if (selectedIds.length > 0) {
+                showToast('{% trans "Exportación de CSV iniciada (próximamente)." %}', 'success');
+            }
+        });
+
+        if (deleteSelectedButton) {
+            deleteSelectedButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                const selectedIds = Array.from(transaccionCheckboxes)
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.dataset.id);
+                if (selectedIds.length > 0 && confirm('{% trans "¿Estás seguro de eliminar las transacciones seleccionadas?" %}')) {
+                    showToast('{% trans "Eliminación iniciada (próximamente)." %}', 'success');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

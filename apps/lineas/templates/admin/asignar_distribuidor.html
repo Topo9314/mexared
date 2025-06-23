@@ -1,0 +1,338 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+  <style>
+    :root {
+      --primary-color: #007bff;
+      --success-color: #28a745;
+      --error-color: #dc3545;
+      --warning-color: #ffc107;
+      --text-color: #212529;
+      --bg-color: #fff;
+      --border-color: #ced4da;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      --border-radius: 6px;
+      --transition: all 0.3s ease;
+      --font-size-base: 1rem;
+      --font-size-small: 0.875rem;
+    }
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 20px;
+      background: var(--bg-color);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+    }
+    h1 {
+      color: var(--primary-color);
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    h3 {
+      color: var(--text-color);
+      font-size: 1.25rem;
+      margin: 20px 0 10px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      font-size: var(--font-size-base);
+      transition: var(--transition);
+    }
+    .form-control:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+      outline: none;
+    }
+    .error-message {
+      color: var(--error-color);
+      font-size: var(--font-size-small);
+      margin-top: 5px;
+      display: none;
+    }
+    .messagelist {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 20px;
+    }
+    .messagelist li {
+      padding: 10px;
+      border-radius: var(--border-radius);
+      margin-bottom: 10px;
+    }
+    .messagelist .success {
+      background: var(--success-color);
+      color: white;
+    }
+    .messagelist .error {
+      background: var(--error-color);
+      color: white;
+    }
+    .messagelist .warning {
+      background: var(--warning-color);
+      color: var(--text-color);
+    }
+    .buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-size: var(--font-size-base);
+      font-weight: 600;
+      transition: var(--transition);
+      text-align: center;
+    }
+    .button.default {
+      background: var(--primary-color);
+      color: white;
+    }
+    .button.default:hover:not(:disabled) {
+      background: #0056b3;
+    }
+    .button.default:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    .button.cancel-link {
+      background: #6c757d;
+      color: white;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+    .button.cancel-link:hover {
+      background: #5a6268;
+    }
+    .lineas-list {
+      max-height: 250px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: 10px;
+      margin-top: 10px;
+      background: #f8f9fa;
+    }
+    .lineas-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-color);
+      font-size: var(--font-size-small);
+    }
+    .lineas-list li:last-child {
+      border-bottom: none;
+    }
+    .searchable-select {
+      position: relative;
+    }
+    .searchable-select input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      font-size: var(--font-size-base);
+    }
+    .highlight {
+      background: #fff3cd;
+      color: var(--warning-color);
+      font-weight: bold;
+    }
+    @media (max-width: 600px) {
+      .container {
+        margin: 10px;
+        padding: 15px;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      .buttons {
+        flex-direction: column;
+        gap: 5px;
+      }
+      .button {
+        width: 100%;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <h1>{% trans "Asignar distribuidor a líneas seleccionadas" %}</h1>
+
+    {% if messages %}
+      <ul class="messagelist">
+        {% for message in messages %}
+          <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <form method="post" id="asignar-distribuidor-form" aria-label="{% trans 'Formulario de asignación de distribuidor' %}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="asignar_distribuidor">
+      {% for selected_id in selected_ids %}
+        <input type="hidden" name="_selected_action" value="{{ selected_id|escape }}">
+      {% endfor %}
+      <div class="form-group">
+        <label for="{{ form.distribuidor.id_for_label }}" class="required">{% trans "Distribuidor a asignar" %}</label>
+        <div class="searchable-select">
+          {{ form.distribuidor }}
+          <input type="text" id="distribuidor-search" class="form-control" placeholder="{% trans 'Buscar distribuidor...' %}" aria-label="{% trans 'Buscar distribuidor' %}">
+        </div>
+        <div id="distribuidor-error" class="error-message" role="alert"></div>
+      </div>
+      <div class="buttons">
+        <button type="submit" name="apply" class="button default" id="submit-button" {% if has_conflicts %}disabled{% endif %}>
+          {% trans "Asignar ahora" %}
+        </button>
+        <a href="{% url 'admin:lineas_linea_changelist' %}" class="button cancel-link">
+          {% trans "Cancelar" %}
+        </a>
+      </div>
+    </form>
+
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid var(--border-color);">
+    <h3>{% trans "Líneas seleccionadas" %} ({{ objects.count }}):</h3>
+    <ul class="lineas-list" aria-label="{% trans 'Lista de líneas seleccionadas' %}">
+      {% for obj in objects %}
+        <li data-msisdn="{{ obj.msisdn|escape }}" {% if obj.distribuidor %}class="highlight"{% endif %}>
+          {{ obj.msisdn|escape }} - {{ obj.get_categoria_servicio_display|escape }} (ICCID: {{ obj.iccid|escape }})
+          {% if obj.distribuidor %}
+            <span style="color: var(--error-color); font-style: italic;">
+              {% trans "Ya asignada a" %} {{ obj.distribuidor.username|escape }}
+            </span>
+          {% endif %}
+        </li>
+      {% empty %}
+        <li>{% trans "No hay líneas seleccionadas." %}</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endblock %}
+
+{% block extrahead %}
+  <script>
+    (function($) {
+      // Utility function to debounce input events
+      const debounce = (func, wait) => {
+        let timeout;
+        return function executedFunction(...args) {
+          const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+          };
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
+      };
+
+      $(document).ready(function() {
+        const $form = $('#asignar-distribuidor-form');
+        const $distribuidorSelect = $('#id_distribuidor');
+        const $searchInput = $('#distribuidor-search');
+        const $errorMessage = $('#distribuidor-error');
+        const $lineasList = $('.lineas-list');
+        const $submitButton = $('#submit-button');
+        const hasConflicts = {{ has_conflicts|default:"false" | safe }};
+
+        // Initialize select state
+        $distribuidorSelect.find('option[value=""]').remove(); // Remove empty option if present
+
+        // Enable/disable submit button based on initial state and conflicts
+        function updateButtonState() {
+          const isValid = $distribuidorSelect.val() && !hasConflicts;
+          $submitButton.prop('disabled', !isValid);
+          if (!isValid && !hasConflicts) {
+            $errorMessage.text('{% trans "Por favor, seleccione un distribuidor válido." %}').show();
+          } else if (hasConflicts) {
+            $errorMessage.text('{% trans "No se puede asignar: algunas líneas ya tienen distribuidor." %}').show();
+          } else {
+            $errorMessage.hide();
+          }
+        }
+        updateButtonState();
+
+        // Real-time validation for distributor select
+        $distribuidorSelect.on('change', function() {
+          updateButtonState();
+        });
+
+        // Interactive distributor search with debounce
+        const searchDistributors = debounce(function() {
+          const searchTerm = $searchInput.val().toLowerCase().trim();
+          $distribuidorSelect.find('option').each(function() {
+            const text = $(this).text().toLowerCase();
+            $(this).toggle(searchTerm === '' || text.includes(searchTerm));
+          });
+          if (!$distribuidorSelect.find('option:visible').length) {
+            $errorMessage.text('{% trans "No se encontraron distribuidores que coincidan." %}').show();
+            $submitButton.prop('disabled', true);
+          } else {
+            updateButtonState();
+          }
+        }, 300);
+        $searchInput.on('input', searchDistributors);
+
+        // Prevent form submission if invalid
+        $form.on('submit', function(e) {
+          if (!$distribuidorSelect.val() || hasConflicts) {
+            e.preventDefault();
+            if (!hasConflicts) {
+              $errorMessage.text('{% trans "Por favor, seleccione un distribuidor válido." %}').show();
+            } else {
+              $errorMessage.text('{% trans "No se puede asignar: algunas líneas ya tienen distribuidor." %}').show();
+            }
+            $submitButton.prop('disabled', true);
+            console.warn('Form submission prevented: Invalid state.');
+            return false;
+          }
+          $submitButton
+            .css('opacity', '0.7')
+            .val('{% trans "Asignando..." %}')
+            .prop('disabled', true);
+          console.info('Submitting form to assign distributor.');
+        });
+
+        // Log interaction for auditing
+        $submitButton.on('click', function() {
+          console.debug('Assign button clicked', {
+            distributor: $distribuidorSelect.val(),
+            lines: $lineasList.find('li').map((_, el) => $(el).data('msisdn')).get()
+          });
+        });
+
+        // Accessibility: Allow keyboard navigation
+        $searchInput.on('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            const firstVisibleOption = $distribuidorSelect.find('option:visible').first();
+            if (firstVisibleOption.length) {
+              $distribuidorSelect.val(firstVisibleOption.val()).trigger('change');
+            }
+          }
+        });
+
+        // Smooth scroll to error messages
+        if ($errorMessage.is(':visible')) {
+          $('html, body').animate({
+            scrollTop: $errorMessage.offset().top - 100
+          }, 500);
+        }
+      });
+    })(django.jQuery);
+  </script>
+{% endblock %}

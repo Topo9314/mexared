@@ -1,0 +1,439 @@
+{% load static i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% translate "Cliente | MexaRed" %}{% endblock %}</title>
+    <meta name="description" content="{% block description %}{% translate "Panel de cliente MexaRed" %}{% endblock %}">
+    <!-- Fuentes e iconos -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --red: #f43f5e;
+            --purple: #a855f7;
+            --sidebar-bg: #e0eafc; /* Pastel cyan-blue for sidebar */
+            --gray-bg: #f9fafb;
+            --dark-text: #111827;
+            --white: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.05);
+            --dark-bg: #1f2a44; /* Dark mode background */
+            --dark-sidebar: #2a3b6b; /* Dark mode sidebar */
+            --dark-content: #2e3a59; /* Dark mode content */
+            --dark-text-light: #e0e0e0; /* Dark mode text */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background: var(--gray-bg);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        body.dark-mode {
+            background: var(--dark-bg);
+            color: var(--dark-text-light);
+        }
+
+        body.dark-mode .sidebar {
+            background: var(--dark-sidebar);
+            border-right-color: #3a4a7b;
+        }
+
+        body.dark-mode .main-content {
+            background: var(--dark-bg);
+        }
+
+        body.dark-mode .topbar,
+        body.dark-mode .content {
+            background: var(--dark-content);
+            box-shadow: 0 2px 10px rgba(255, 255, 255, 0.05);
+        }
+
+        body.dark-mode .welcome,
+        body.dark-mode .menu a {
+            color: var(--dark-text-light);
+        }
+
+        body.dark-mode .menu a:hover {
+            background: rgba(168, 85, 247, 0.2);
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--gray-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        body.dark-mode .loader {
+            background: var(--dark-bg);
+        }
+
+        .loader.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader::after {
+            content: '';
+            width: 40px;
+            height: 40px;
+            border: 4px solid transparent;
+            border-top: 4px solid var(--red);
+            border-right: 4px solid var(--purple);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .sidebar {
+            width: 240px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid #e5e7eb;
+            padding: 20px;
+            position: fixed;
+            height: 100%;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            animation: slideInSidebar 0.5s ease-out;
+        }
+
+        @keyframes slideInSidebar {
+            from { transform: translateX(-240px); }
+            to { transform: translateX(0); }
+        }
+
+        .sidebar .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .sidebar .logo .red {
+            color: var(--red);
+        }
+
+        .sidebar .logo .purple {
+            color: var(--purple);
+        }
+
+        .sidebar .menu ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar .menu li {
+            margin: 1rem 0;
+        }
+
+        .sidebar .menu a {
+            text-decoration: none;
+            color: var(--dark-text);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar .menu a:hover {
+            color: var(--purple);
+            background: rgba(168, 85, 247, 0.1);
+            transform: translateX(5px);
+        }
+
+        .sidebar .menu a i {
+            font-size: 1.2rem;
+        }
+
+        .main-content {
+            margin-left: 240px;
+            flex: 1;
+            padding: 20px 30px;
+            background: var(--gray-bg);
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: var(--white);
+            padding: 15px 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px var(--shadow);
+            animation: slideInTopbar 0.5s ease-out;
+        }
+
+        @keyframes slideInTopbar {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .welcome {
+            font-size: 1.2rem;
+            color: var(--dark-text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: var(--dark-text);
+            transition: color 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            color: var(--purple);
+        }
+
+        body.dark-mode .theme-toggle {
+            color: var(--dark-text-light);
+        }
+
+        .content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px var(--shadow);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .footer {
+            margin-top: 2rem;
+            padding: 15px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #5f6368;
+            background: var(--white);
+            border-radius: 15px;
+            box-shadow: 0 -2px 10px var(--shadow);
+        }
+
+        body.dark-mode .footer {
+            background: var(--dark-content);
+            color: #a0a0a0;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+        }
+
+        .toast {
+            background: linear-gradient(to right, #f43f5e, #a855f7);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .hamburger {
+            display: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--dark-text);
+        }
+
+        body.dark-mode .hamburger {
+            color: var(--dark-text-light);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hamburger {
+                display: block;
+                position: fixed;
+                top: 15px;
+                left: 15px;
+                z-index: 1001;
+            }
+
+            .sidebar {
+                transform: translateX(-240px);
+                width: 200px;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .topbar {
+                padding: 10px 15px;
+            }
+
+            .welcome {
+                font-size: 1rem;
+            }
+
+            .content {
+                padding: 1.5rem;
+            }
+
+            .toast-container {
+                top: 10px;
+                right: 10px;
+                width: 90%;
+            }
+        }
+
+        /* Accessibility */
+        :focus {
+            outline: 2px solid var(--purple);
+            outline-offset: 2px;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="loader" id="loader"></div>
+    {% if not request.user.is_authenticated or request.user.rol != "cliente" %}
+        <script>window.location.href = "{% url 'users:login' %}";</script>
+    {% endif %}
+    <div class="layout">
+        <!-- Sidebar lateral -->
+        <aside class="sidebar">
+            <div class="logo">
+                <span class="red">MEXA</span><span class="purple">RED</span>
+            </div>
+            <nav class="menu">
+                <ul>
+                    <li><a href="{% url 'users:panel_cliente' %}" aria-label="{% translate 'Ir al inicio' %}"><i class="fa-solid fa-home"></i> {% translate "Inicio" %}</a></li>
+                    <li><a href="{% url 'users:editar_perfil_cliente' %}" aria-label="{% translate 'Ir al perfil' %}"><i class="fa-solid fa-user"></i> {% translate "Perfil" %}</a></li>
+                    <li><a href="#" aria-label="{% translate 'Ir a configuraciones' %}"><i class="fa-solid fa-gear"></i> {% translate "Configuraciones" %}</a></li>
+                    <li><a href="{% url 'users:logout' %}" aria-label="{% translate 'Cerrar sesión' %}"><i class="fa-solid fa-right-from-bracket"></i> {% translate "Salir" %}</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Contenido principal -->
+        <main class="main-content">
+            <div class="hamburger" onclick="toggleSidebar()">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            <!-- Encabezado -->
+            <header class="topbar">
+                <div class="welcome">
+                    {% if request.user.is_authenticated %}
+                        {% translate "Bienvenido" %}, <strong>{{ request.user.first_name }}</strong> 👋
+                    {% endif %}
+                </div>
+                <div class="theme-toggle" onclick="toggleTheme()" aria-label="{% translate 'Cambiar tema' %}">
+                    <i class="fa-solid fa-moon"></i>
+                </div>
+            </header>
+
+            <!-- Bloque de contenido -->
+            <section class="content">
+                {% block content %}{% endblock %}
+            </section>
+
+            <!-- Footer -->
+            <footer class="footer">
+                {% translate "©" %} {% now "Y" %} MexaRed. {% translate "Todos los derechos reservados." %}
+            </footer>
+        </main>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // Loader fade-out
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('loader');
+            loader.classList.add('fade-out');
+        });
+
+        // Sidebar toggle for mobile
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        }
+
+        // Theme toggle
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', body.classList.contains('dark-mode'));
+            document.querySelector('.theme-toggle i').classList.toggle('fa-sun');
+            document.querySelector('.theme-toggle i').classList.toggle('fa-moon');
+        }
+
+        // Load theme preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+            document.querySelector('.theme-toggle i').classList.replace('fa-moon', 'fa-sun');
+        }
+
+        // Toast notification example (placeholder for dynamic alerts)
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<i class="fa-solid fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
+            toastContainer.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

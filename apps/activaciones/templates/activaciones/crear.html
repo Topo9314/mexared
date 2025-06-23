@@ -1,0 +1,356 @@
+{% extends "layout/base_distribuidor.html" %}
+{% load static i18n widget_tweaks %}
+
+{% block extra_head %}
+    <!-- Google Fonts para Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Select2 para mejorar selectores -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Habilitar tooltips
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            tooltipTriggerList.forEach(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
+            // Inicializar Select2 para selectores
+            $('#id_tipo_activacion, #id_tipo_oferta, #id_plan').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: $(this).data('placeholder'),
+                allowClear: true
+            });
+
+            // Capitalizar nombre del cliente
+            $('#id_nombre_cliente').on('input', function() {
+                let value = $(this).val();
+                if (value) {
+                    $(this).val(value.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()));
+                }
+            });
+
+            // Mostrar/ocultar campos de portabilidad
+            $('#id_tipo_activacion').on('change', function() {
+                const isPortabilidad = $(this).val() === 'ACTIVACION_PORTABILIDAD';
+                $('#campos_portabilidad').toggle(isPortabilidad);
+                $('#campos_portabilidad input').prop('required', isPortabilidad);
+            }).trigger('change');
+
+            // Validar confirmación del número a portar en tiempo real
+            $('#id_numero_a_portar_confirmar').on('input', function() {
+                const numero = $('#id_numero_a_portar').val();
+                const confirmar = $(this).val();
+                const feedback = $('#numero_confirmacion_feedback');
+                if (numero && confirmar && numero !== confirmar) {
+                    feedback.text('{% trans "Los números a portar no coinciden." %}').show();
+                    $(this).addClass('is-invalid');
+                } else {
+                    feedback.hide();
+                    $(this).removeClass('is-invalid');
+                }
+            });
+
+            // Obtener tipo de producto automáticamente al ingresar ICCID
+            $('#id_iccid').on('blur', function() {
+                const iccid = $(this).val();
+                if (iccid && /^\d{19,22}$/.test(iccid)) {
+                    $.ajax({
+                        url: '{% url "activaciones:get_product_type_by_iccid" %}',
+                        data: { iccid: iccid },
+                        success: function(response) {
+                            if (response.tipo_oferta) {
+                                $('#id_tipo_oferta').val(response.tipo_oferta).trigger('change');
+                            }
+                        },
+                        error: function(xhr) {
+                            console.error('Error al validar ICCID:', xhr.responseText);
+                            alert('{% trans "Error al validar el ICCID. Por favor, verifica el valor ingresado." %}');
+                        }
+                    });
+                }
+            });
+
+            // Cargar ofertas dinámicamente según tipo de producto
+            $('#id_tipo_oferta').on('change', function() {
+                const tipoProducto = $(this).val();
+                if (tipoProducto) {
+                    $.ajax({
+                        url: '{% url "activaciones:get_planes_por_tipo" %}',
+                        data: { tipo_oferta: tipoProducto },
+                        success: function(response) {
+                            const $ofertaSelect = $('#id_plan');
+                            $ofertaSelect.empty().append('<option value="" disabled selected>{% trans "Seleccione una oferta" %}</option>');
+                            response.forEach(item => {
+                                $ofertaSelect.append(`<option value="${item.id}">${item.nombre} (${item.moneda} ${item.precio_cliente})</option>`);
+                            });
+                            $ofertaSelect.trigger('change');
+                        },
+                        error: function(xhr) {
+                            console.error('Error al cargar ofertas:', xhr.responseText);
+                            $('#id_plan').empty().append('<option value="" disabled selected>{% trans "Error al cargar ofertas" %}</option>');
+                            alert('{% trans "Error al cargar las ofertas. Por favor, intenta de nuevo." %}');
+                        }
+                    });
+                } else {
+                    $('#id_plan').empty().append('<option value="" disabled selected>{% trans "Seleccione una oferta" %}</option>');
+                }
+            }).trigger('change');
+        });
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', 'Roboto', 'Arial', sans-serif;
+            background-color: #f6f7f9;
+            color: #323338;
+        }
+        h2, h5 {
+            color: #a25ddc;
+            font-weight: 600;
+        }
+        .form-label {
+            color: #323338;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #c4c7cc;
+            padding: 10px 12px;
+            font-size: 0.9rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #0073ea;
+            box-shadow: 0 0 0 0.2rem rgba(0, 115, 234, 0.25);
+        }
+        .form-control.is-invalid, .form-select.is-invalid {
+            border-color: #ff7575;
+        }
+        .invalid-feedback {
+            color: #ff7575;
+            font-size: 0.8rem;
+        }
+        .btn-primary {
+            background-color: #0073ea;
+            border-color: #0073ea;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .btn-primary:hover {
+            background-color: #3395ff;
+            border-color: #3395ff;
+        }
+        .btn-secondary {
+            background-color: #c4c7cc;
+            border-color: #c4c7cc;
+            border-radius: 8px;
+            color: #323338;
+            padding: 10px 20px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .btn-secondary:hover {
+            background-color: #d4d6db;
+            border-color: #d4d6db;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+        }
+        .tooltip-inner {
+            background-color: #a25ddc;
+            color: #ffffff;
+            font-size: 0.8rem;
+        }
+        .tooltip.bs-tooltip-top .tooltip-arrow::before {
+            border-top-color: #a25ddc;
+        }
+        .tooltip.bs-tooltip-bottom .tooltip-arrow::before {
+            border-bottom-color: #a25ddc;
+        }
+        .tooltip.bs-tooltip-start .tooltip-arrow::before {
+            border-left-color: #a25ddc;
+        }
+        .tooltip.bs-tooltip-end .tooltip-arrow::before {
+            border-right-color: #a25ddc;
+        }
+        .select2-container--bootstrap-5 .select2-selection {
+            border-radius: 8px;
+            border: 1px solid #c4c7cc;
+            padding: 6px 12px;
+        }
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+    </style>
+{% endblock %}
+
+{% block title %}
+    {% if activacion %}
+        {% trans "Editar Activación" %} | MexaRed
+    {% else %}
+        {% trans "Nueva Activación" %} | MexaRed
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if request.user.is_authenticated and request.user.rol in 'admin,distribuidor,vendedor' %}
+        <div class="container py-5">
+            <h2 class="fw-bold mb-4">
+                {% if activacion %}
+                    {% trans "Editar Activación" %}
+                {% else %}
+                    {% trans "Nueva Activación" %}
+                {% endif %}
+            </h2>
+
+            <div class="card p-4">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} mb-4" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <div class="row g-4">
+                        <!-- ICCID -->
+                        <div class="col-md-6">
+                            <label for="id_iccid" class="form-label" aria-describedby="iccid-help">{% trans "ICCID" %}</label>
+                            {% render_field form.iccid class="form-control" placeholder="Ingresa el ICCID (19-22 dígitos)" data-bs-toggle="tooltip" title="Número ICCID de la SIM (19-22 dígitos)" required="required" pattern="\d{19,22}" %}
+                            {% if form.iccid.errors %}
+                                <div class="invalid-feedback d-block" id="iccid-help">
+                                    {{ form.iccid.errors.as_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Nombre del Cliente -->
+                        <div class="col-md-6">
+                            <label for="id_nombre_cliente" class="form-label" aria-describedby="nombre_cliente-help">{% trans "Nombre del Cliente" %}</label>
+                            {% render_field form.nombre_cliente class="form-control" placeholder="Nombre completo" data-bs-toggle="tooltip" title="Nombre completo del cliente" required="required" %}
+                            {% if form.nombre_cliente.errors %}
+                                <div class="invalid-feedback d-block" id="nombre_cliente-help">
+                                    {{ form.nombre_cliente.errors.as_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Teléfono de Contacto -->
+                        <div class="col-md-6">
+                            <label for="id_telefono_contacto" class="form-label" aria-describedby="telefono_contacto-help">{% trans "Teléfono de Contacto" %}</label>
+                            {% render_field form.telefono_contacto class="form-control" placeholder="Ej: 1234567890" data-bs-toggle="tooltip" title="Número telefónico del cliente (10 dígitos)" required="required" pattern="\d{10}" %}
+                            {% if form.telefono_contacto.errors %}
+                                <div class="invalid-feedback d-block" id="telefono_contacto-help">
+                                    {{ form.telefono_contacto.errors.as_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Correo Electrónico -->
+                        <div class="col-md-6">
+                            <label for="id_correo_electronico" class="form-label" aria-describedby="correo_electronico-help">{% trans "Correo Electrónico" %}</label>
+                            {% render_field form.correo_electronico class="form-control" placeholder="cliente@ejemplo.com" data-bs-toggle="tooltip" title="Correo electrónico del cliente (opcional)" %}
+                            {% if form.correo_electronico.errors %}
+                                <div class="invalid-feedback d-block" id="correo_electronico-help">
+                                    {{ form.correo_electronico.errors.as_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Tipo de Activación -->
+                        <div class="col-md-4">
+                            <label for="id_tipo_activacion" class="form-label" aria-describedby="tipo_activacion-help">{% trans "Tipo de Activación" %}</label>
+                            {% render_field form.tipo_activacion class="form-select" data-placeholder="Seleccione tipo de activación" data-bs-toggle="tooltip" title="Selecciona el tipo de activación" required="required" %}
+                            {% if form.tipo_activacion.errors %}
+                                <div class="invalid-feedback d-block" id="tipo_activacion-help">
+                                    {{ form.tipo_activacion.errors.as_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Tipo de Producto -->
+                        <div class="col-md-4">
+                            <label for="id_tipo_oferta" class="form-label" aria-describedby="tipo_oferta-help">{% trans "Tipo de Producto" %}</label>
+                            {% render_field form.tipo_oferta class="form-select" data-placeholder="Seleccione tipo de producto" data-bs-toggle="tooltip" title="Selecciona el tipo de producto" required="required" %}
+                            {% if form.tipo_oferta.errors %}
+                                <div class="invalid-feedback d-block" id="tipo_oferta-help">
+                                    {{ form.tipo_oferta.errors.as_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Oferta -->
+                        <div class="col-md-4">
+                            <label for="id_plan" class="form-label" aria-describedby="plan-help">{% trans "Oferta" %}</label>
+                            {% render_field form.plan class="form-select" data-placeholder="Seleccione una oferta" data-bs-toggle="tooltip" title="Oferta disponible para la activación" required="required" %}
+                            {% if form.plan.errors %}
+                                <div class="invalid-feedback d-block" id="plan-help">
+                                    {{ form.plan.errors.as_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Campos de Portabilidad -->
+                        <div id="campos_portabilidad" class="col-12" style="display: none;">
+                            <h5 class="mt-4 mb-3" style="color: #a25ddc;">{% trans "Detalles de Portabilidad" %}</h5>
+                            <div class="row g-4">
+                                <!-- Número a Portar -->
+                                <div class="col-md-6">
+                                    <label for="id_numero_a_portar" class="form-label" aria-describedby="numero_a_portar-help">{% trans "Número a Portar" %}</label>
+                                    {% render_field form.numero_a_portar class="form-control" placeholder="Ej: 1234567890" data-bs-toggle="tooltip" title="Número telefónico a portar (10 dígitos)" pattern="\d{10}" %}
+                                    {% if form.numero_a_portar.errors %}
+                                        <div class="invalid-feedback d-block" id="numero_a_portar-help">
+                                            {{ form.numero_a_portar.errors.as_text }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Confirmar Número a Portar -->
+                                <div class="col-md-6">
+                                    <label for="id_numero_a_portar_confirmar" class="form-label" aria-describedby="numero_confirmacion-help">{% trans "Confirmar Número a Portar" %}</label>
+                                    {% render_field form.numero_a_portar_confirmar class="form-control" placeholder="Repita el número a portar" data-bs-toggle="tooltip" title="Confirme el número telefónico a portar (10 dígitos)" pattern="\d{10}" %}
+                                    <div class="invalid-feedback d-block" id="numero_confirmacion_feedback" style="display: none;"></div>
+                                </div>
+
+                                <!-- NIP de Portabilidad -->
+                                <div class="col-md-6">
+                                    <label for="id_nip_portabilidad" class="form-label" aria-describedby="nip-help">{% trans "NIP de Portabilidad" %}</label>
+                                    {% render_field form.nip_portabilidad class="form-control" placeholder="1234" data-bs-toggle="tooltip" title="Código NIP de 4 dígitos" pattern="\d{4}" %}
+                                    {% if form.nip_portabilidad.errors %}
+                                        <div class="invalid-feedback d-block" id="nip-help">
+                                            {{ form.nip_portabilidad.errors.as_text }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="d-flex justify-content-end mt-4">
+                        <a href="{% url 'activaciones:listado_activaciones' %}" class="btn btn-secondary me-3" data-bs-toggle="tooltip" title="{% trans 'Volver a la lista de activaciones' %}">{% trans "Cancelar" %}</a>
+                        <button type="submit" class="btn btn-primary" data-bs-toggle="tooltip" title="{% trans 'Guardar la activación' %}">{% trans "Guardar" %}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% else %}
+        <div class="container py-5 text-center">
+            <div class="alert alert-danger" role="alert">
+                {% trans "Acceso denegado. Solo los usuarios con rol Admin o Distribuidor pueden crear/editar activaciones." %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

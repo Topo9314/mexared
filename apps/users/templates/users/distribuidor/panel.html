@@ -1,0 +1,311 @@
+{% extends 'layout/base_distribuidor.html' %}
+
+{% load static i18n %}
+
+{% block title %}
+    {% trans "Panel | MexaRed" %}
+{% endblock %}
+
+{% block content %}
+    <style>
+        :root {
+            --mexared-green: #00A862;
+            --mexared-orange: #FF5722;
+            --mexared-blue: #2196F3;
+            --white: #FFFFFF;
+            --dark-sidebar: #1A1A2E;
+            --gray-dark: #333333;
+            --gray-medium: #666666;
+            --gray-light: #999999;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --shadow-dark: rgba(0, 0, 0, 0.2);
+            --transition-speed: 0.3s;
+            --font-size-xs: 0.75rem;
+            --font-size-sm: 0.875rem;
+            --font-size-md: 1rem;
+            --font-size-lg: 1.25rem;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            padding: 24px 0;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--white, #FFFFFF);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow-light, rgba(0, 0, 0, 0.1));
+            padding: 20px;
+            transition: transform var(--transition-speed, 0.3s) ease, box-shadow var(--transition-speed, 0.3s) ease;
+            animation: fadeInCard 0.5s ease-out;
+            overflow: hidden;
+        }
+
+        .dark-mode .card {
+            background: var(--dark-sidebar, #1A1A2E);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+        }
+
+        @keyframes fadeInCard {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px var(--shadow-dark, rgba(0, 0, 0, 0.2));
+        }
+
+        .dark-mode .card:hover {
+            box-shadow: 0 8px 16px rgba(255, 255, 255, 0.1);
+        }
+
+        .card h3 {
+            font-size: var(--font-size-lg, 1.25rem);
+            font-weight: 600;
+            color: var(--gray-dark, #333333);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dark-mode .card h3 {
+            color: var(--white, #FFFFFF);
+        }
+
+        .card p {
+            font-size: var(--font-size-sm, 0.875rem);
+            color: var(--gray-medium, #666666);
+            margin-bottom: 8px;
+        }
+
+        .dark-mode .card p {
+            color: var(--gray-light, #999999);
+        }
+
+        .card .highlight {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--mexared-blue, #2196F3);
+        }
+
+        .dark-mode .card .highlight {
+            color: var(--mexared-blue, #2196F3);
+        }
+
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .action-btn {
+            background: var(--mexared-green, #00A862);
+            color: var(--white, #FFFFFF);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: var(--font-size-sm, 0.875rem);
+            font-weight: 500;
+            cursor: pointer;
+            transition: background var(--transition-speed, 0.3s) ease, transform var(--transition-speed, 0.3s) ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            outline: none;
+        }
+
+        .action-btn:hover {
+            background: color-mix(in srgb, var(--mexared-green, #00A862) 90%, #FFFFFF);
+            transform: translateY(-2px);
+        }
+
+        .action-btn:disabled {
+            background: var(--gray-light, #999999);
+            color: var(--gray-medium, #666666);
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .card-sales {
+            background: linear-gradient(135deg, rgba(255, 87, 34, 0.1), rgba(255, 87, 34, 0.05));
+        }
+
+        .dark-mode .card-sales {
+            background: linear-gradient(135deg, rgba(255, 87, 34, 0.2), rgba(255, 87, 34, 0.1));
+        }
+
+        .card-vendors,
+        .card-lines {
+            background: linear-gradient(135deg, rgba(0, 166, 98, 0.1), rgba(0, 166, 98, 0.05));
+        }
+
+        .dark-mode .card-vendors,
+        .dark-mode .card-lines {
+            background: linear-gradient(135deg, rgba(0, 166, 98, 0.2), rgba(0, 166, 98, 0.1));
+        }
+
+        .card-balance {
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.1), rgba(33, 150, 243, 0.05));
+        }
+
+        .dark-mode .card-balance {
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.2), rgba(33, 150, 243, 0.1));
+        }
+
+        .recent-transactions {
+            margin-top: 16px;
+        }
+
+        .recent-transactions h4 {
+            font-size: var(--font-size-md, 1rem);
+            font-weight: 600;
+            color: var(--gray-dark, #333333);
+            margin-bottom: 12px;
+        }
+
+        .dark-mode .recent-transactions h4 {
+            color: var(--white, #FFFFFF);
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-light, #999999);
+        }
+
+        .dark-mode .transaction-item {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-item .date {
+            color: var(--gray-medium, #666666);
+            font-size: var(--font-size-sm, 0.875rem);
+        }
+
+        .dark-mode .transaction-item .date {
+            color: var(--gray-light, #999999);
+        }
+
+        .transaction-item .amount {
+            color: var(--mexared-green, #00A862);
+            font-weight: 500;
+        }
+
+        .placeholder-text {
+            font-style: italic;
+            color: var(--gray-medium, #666666);
+            text-align: center;
+            padding: 8px;
+            font-size: var(--font-size-sm, 0.875rem);
+        }
+
+        .dark-mode .placeholder-text {
+            color: var(--gray-light, #999999);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .card h3 {
+                font-size: var(--font-size-md, 1rem);
+            }
+
+            .action-btn {
+                font-size: var(--font-size-xs, 0.75rem);
+                padding: 6px 12px;
+            }
+        }
+
+        /* Accessibility */
+        .action-btn:focus {
+            outline: 2px solid var(--mexared-green, #00A862);
+            outline-offset: 2px;
+        }
+    </style>
+
+    <h2>{% trans "Panel del Distribuidor" %}</h2>
+    <p>{% trans "Bienvenido a tu tablero de control. Aquí podrás ver tus métricas, recargas, vendedores y comisiones." %}</p>
+
+    <div class="dashboard">
+        <!-- Ventas del Mes -->
+        <div class="card card-sales" role="region" aria-label="{% trans 'Ventas del Mes' %}">
+            <h3><i class="fa-solid fa-money-bill-trend-up"></i> {% trans "Ventas del Mes" %}</h3>
+            <p>{% trans "Monto Total Recargado" %}</p>
+            <p class="placeholder-text">{% trans "Próximamente: Visualización de ventas mensuales" %}</p>
+        </div>
+
+        <!-- Vendedores Activos -->
+        <div class="card card-vendors" role="region" aria-label="{% trans 'Vendedores Activos' %}">
+            <h3><i class="fa-solid fa-users"></i> {% trans "Vendedores Activos" %}</h3>
+            <p>{% trans "Total de vendedores" %}</p>
+            <p class="highlight">{{ vendedores_count }}</p>
+            <div class="quick-actions">
+                <a href="{% url 'vendedores:lista' %}" class="action-btn" aria-label="{% trans 'Gestionar vendedores' %}">
+                    <i class="fa-solid fa-user-tie"></i> {% trans "Gestionar" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Líneas Activadas Hoy -->
+        <div class="card card-lines" role="region" aria-label="{% trans 'Líneas Activadas Hoy' %}">
+            <h3><i class="fa-solid fa-sim-card"></i> {% trans "Líneas Activadas Hoy" %}</h3>
+            <p>{% trans "Total de líneas activadas" %}</p>
+            <p class="placeholder-text">{% trans "Próximamente: Conteo de líneas activadas" %}</p>
+        </div>
+
+        <!-- Saldo Disponible -->
+        <div class="card card-balance" role="region" aria-label="{% trans 'Saldo Disponible' %}">
+            <h3><i class="fa-solid fa-wallet"></i> {% trans "Saldo Disponible" %}</h3>
+            <p>{% trans "Dinero para recargas" %}</p>
+            <p class="highlight">${{ saldo_disponible|floatformat:2 }} MXN</p>
+            <div class="quick-actions">
+                <a href="{% url 'wallet:recarga' %}" class="action-btn" aria-label="{% trans 'Hacer recarga' %}">
+                    <i class="fa-solid fa-money-bill-wave"></i> {% trans "Hacer Recarga" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Historial Rápido -->
+        <div class="card card-transactions" role="region" aria-label="{% trans 'Historial Rápido' %}">
+            <h3><i class="fa-solid fa-history"></i> {% trans "Historial Rápido" %}</h3>
+            <div class="recent-transactions">
+                <h4>{% trans "Últimas 5 Recargas" %}</h4>
+                <p class="placeholder-text">{% trans "Próximamente: Historial de transacciones en tiempo real" %}</p>
+            </div>
+        </div>
+
+        <!-- Gráfica de Resumen Semanal -->
+        <div class="card card-chart" role="region" aria-label="{% trans 'Resumen Semanal' %}">
+            <h3><i class="fa-solid fa-chart-bar"></i> {% trans "Resumen Semanal" %}</h3>
+            <p class="placeholder-text">{% trans "Próximamente: Gráficos interactivos de rendimiento" %}</p>
+        </div>
+
+        <!-- Mapa de Cobertura -->
+        <div class="card card-map" role="region" aria-label="{% trans 'Mapa de Cobertura' %}">
+            <h3><i class="fa-solid fa-map-marked-alt"></i> {% trans "Mapa de Cobertura" %}</h3>
+            <div class="map-placeholder">
+                {% trans "Próximamente: Mapa interactivo de cobertura" %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

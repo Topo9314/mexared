@@ -1,0 +1,5 @@
+WARNING 2025-06-06 22:46:29,233 django.security.csrf Forbidden (CSRF token from POST incorrect.): /usuarios/login/
+WARNING 2025-06-09 21:09:10,019 django.security.csrf Forbidden (CSRF token from POST incorrect.): /users/login/
+WARNING 2025-06-09 21:09:13,840 django.security.csrf Forbidden (CSRF token from POST incorrect.): /users/login/
+WARNING 2025-06-09 21:29:31,630 django.security.csrf Forbidden (CSRF token from POST incorrect.): /users/login/
+WARNING 2025-06-13 22:33:23,049 django.security.csrf log log_response 248 Forbidden (CSRF token from POST incorrect.): /users/login/

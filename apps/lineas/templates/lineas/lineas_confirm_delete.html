@@ -1,0 +1,81 @@
+{% extends "base_distribuidor.html" %}
+{% load i18n bootstrap5 %}
+
+{% block title %}
+    {% trans "Cancel Line | MexaRed" %}
+{% endblock %}
+
+{% block content %}
+<style>
+    .delete-container {
+        max-width: 600px;
+        margin: 24px auto;
+        padding: 24px;
+        background: var(--white);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px var(--shadow-light);
+    }
+
+    .dark-mode .delete-container {
+        background: var(--dark-sidebar);
+        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+    }
+
+    .delete-container h2 {
+        font-size: var(--font-size-xl);
+        font-weight: 600;
+        color: var(--gray-dark);
+        margin-bottom: 16px;
+    }
+
+    .dark-mode .delete-container h2 {
+        color: var(--white);
+    }
+
+    .delete-container p {
+        color: var(--gray-medium);
+        font-size: var(--font-size-sm);
+        margin-bottom: 24px;
+    }
+
+    .dark-mode .delete-container p {
+        color: var(--gray-light);
+    }
+
+    .btn-danger, .btn-secondary {
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: var(--font-size-sm);
+    }
+
+    @media (max-width: 768px) {
+        .delete-container {
+            padding: 16px;
+        }
+
+        .delete-container h2 {
+            font-size: var(--font-size-lg);
+        }
+    }
+</style>
+
+<div class="delete-container">
+    <h2>{% trans "Cancel Line" %} {{ object.msisdn }}</h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'core:panel' %}">{% trans "Dashboard" %}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'lineas:list' %}">{% trans "Line Management" %}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{% trans "Cancel" %}</li>
+        </ol>
+    </nav>
+
+    <p>{% trans "Are you sure you want to cancel this line?" %} {% trans "This action will mark the line as 'Cancelled' and cannot be undone." %}</p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="d-flex justify-content-end gap-2">
+            <a href="{% url 'lineas:list' %}" class="btn btn-secondary">{% trans "Cancel" %}</a>
+            <button type="submit" class="btn btn-danger">{% trans "Confirm Cancellation" %}</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

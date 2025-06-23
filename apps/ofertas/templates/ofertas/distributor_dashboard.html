@@ -1,0 +1,302 @@
+{% extends 'layout/base_distribuidor.html' %}
+{% load static i18n %}
+
+{% block title %}
+    {% trans "Tablero del Distribuidor | Consola Global MexaRed" %}
+{% endblock %}
+
+{% block content %}
+    <style>
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            padding: 24px 0;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow-light);
+            padding: 20px;
+            transition: transform var(--transition-speed, 0.3s) ease, box-shadow var(--transition-speed, 0.3s) ease;
+            animation: fadeInCard 0.5s ease-out;
+        }
+
+        .dark-mode .card {
+            background: var(--dark-sidebar);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+        }
+
+        @keyframes fadeInCard {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px var(--shadow-dark);
+        }
+
+        .dark-mode .card:hover {
+            box-shadow: 0 8px 16px rgba(255, 255, 255, 0.1);
+        }
+
+        .card h3 {
+            font-size: var(--font-size-lg, 1.25rem);
+            font-weight: 600;
+            color: var(--gray-dark, #333);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dark-mode .card h3 {
+            color: var(--white);
+        }
+
+        .card p {
+            font-size: var(--font-size-sm, 0.875rem);
+            color: var(--gray-medium, #666);
+            margin-bottom: 8px;
+        }
+
+        .dark-mode .card p {
+            color: var(--gray-light, #bbb);
+        }
+
+        .card .highlight {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--accent-pink, #ff69b4);
+        }
+
+        .dark-mode .card .highlight {
+            color: var(--accent-pink, #ff69b4);
+        }
+
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .action-btn {
+            background: var(--primary-purple, #6b46c1);
+            color: var(--white, #fff);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: var(--font-size-sm, 0.875rem);
+            font-weight: 500;
+            cursor: pointer;
+            transition: background var(--transition-speed, 0.3s) ease, transform var(--transition-speed, 0.3s) ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+
+        .action-btn:hover {
+            background: var(--primary-purple-light, #805ad5);
+            transform: translateY(-2px);
+        }
+
+        .action-btn.disabled {
+            background: var(--gray-light, #d3d3d3);
+            color: var(--gray-medium, #666);
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .card-sales {
+            background: linear-gradient(135deg, rgba(255, 105, 180, 0.1), rgba(255, 105, 180, 0.05));
+        }
+
+        .dark-mode .card-sales {
+            background: linear-gradient(135deg, rgba(255, 105, 180, 0.2), rgba(255, 105, 180, 0.1));
+        }
+
+        .card-vendors,
+        .card-lines {
+            background: linear-gradient(135deg, rgba(0, 196, 180, 0.1), rgba(0, 196, 180, 0.05));
+        }
+
+        .dark-mode .card-vendors,
+        .dark-mode .card-lines {
+            background: linear-gradient(135deg, rgba(0, 196, 180, 0.2), rgba(0, 196, 180, 0.1));
+        }
+
+        .card-balance {
+            background: linear-gradient(135deg, rgba(82, 79, 245, 0.1), rgba(82, 79, 245, 0.05));
+        }
+
+        .dark-mode .card-balance {
+            background: linear-gradient(135deg, rgba(82, 79, 245, 0.2), rgba(82, 79, 245, 0.1));
+        }
+
+        .recent-transactions {
+            margin-top: 16px;
+        }
+
+        .recent-transactions h4 {
+            font-size: var(--font-size-md, 1rem);
+            font-weight: 600;
+            color: var(--gray-dark, #333);
+            margin-bottom: 12px;
+        }
+
+        .dark-mode .recent-transactions h4 {
+            color: var(--white);
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-light, #e0e0e0);
+        }
+
+        .dark-mode .transaction-item {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-item .date {
+            color: var(--gray-medium, #666);
+            font-size: var(--font-size-sm, 0.875rem);
+        }
+
+        .dark-mode .transaction-item .date {
+            color: var(--gray-light, #bbb);
+        }
+
+        .transaction-item .amount {
+            color: var(--accent-green, #28a745);
+            font-weight: 500;
+        }
+
+        .placeholder-text {
+            font-style: italic;
+            color: var(--gray-medium, #666);
+            text-align: center;
+            padding: 8px;
+            font-size: var(--font-size-sm, 0.875rem);
+        }
+
+        .dark-mode .placeholder-text {
+            color: var(--gray-light, #bbb);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .card h3 {
+                font-size: var(--font-size-md, 1rem);
+            }
+
+            .action-btn {
+                font-size: var(--font-size-xs, 0.75rem);
+                padding: 6px 12px;
+            }
+        }
+
+        /* Accessibility */
+        .action-btn:focus {
+            outline: 2px solid var(--primary-purple, #6b46c1);
+            outline-offset: 2px;
+        }
+    </style>
+
+    <h2>{% trans "Panel del Distribuidor" %}</h2>
+    <p>{% trans "Bienvenido a tu tablero de control. Aquí podrás ver tus métricas, recargas, vendedores y comisiones." %}</p>
+
+    <div class="dashboard">
+        <!-- Ofertas Totales -->
+        <div class="card card-vendors">
+            <h3><i class="fa-solid fa-box-open"></i> {% trans "Ofertas Totales" %}</h3>
+            <p>{% trans "Ofertas activas en tu catálogo" %}</p>
+            <p class="highlight">{{ total_offers|default:"0" }}</p>
+            <div class="quick-actions">
+                <a href="{% url 'ofertas:distributor_list_offers' %}" 
+                   class="action-btn" 
+                   role="button" 
+                   aria-label="{% trans 'Ver Ofertas' %}" 
+                   tabindex="0">
+                    <i class="fa-solid fa-eye"></i> {% trans "Ver" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Márgenes Configurados Totales -->
+        <div class="card card-lines">
+            <h3><i class="fa-solid fa-chart-line"></i> {% trans "Márgenes Configurados Totales" %}</h3>
+            <p>{% trans "Perfiles de márgenes configurados" %}</p>
+            <p class="highlight">{{ total_margins|default:"0" }}</p>
+            <div class="quick-actions">
+                <a href="{% url 'ofertas:distributor_list_vendedor_margins' %}" 
+                   class="action-btn" 
+                   role="button" 
+                   aria-label="{% trans 'Gestionar Márgenes' %}" 
+                   tabindex="0">
+                    <i class="fa-solid fa-sliders"></i> {% trans "Gestionar" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Ganancia Potencial -->
+        <div class="card card-balance">
+            <h3><i class="fa-solid fa-sack-dollar"></i> {% trans "Ganancia Potencial" %}</h3>
+            <p>{% trans "Ganancias estimadas de márgenes" %}</p>
+            <p class="highlight">{{ potential_profit|floatformat:2|default:"0.00" }} {{ currency }}</p>
+            <div class="quick-actions">
+                <a href="{% url 'ofertas:distributor_profitability' %}" 
+                   class="action-btn" 
+                   role="button" 
+                   aria-label="{% trans 'Reporte de Ganancia' %}" 
+                   tabindex="0">
+                    <i class="fa-solid fa-file-invoice"></i> {% trans "Reporte" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Vendedores Totales -->
+        <div class="card card-vendors">
+            <h3><i class="fa-solid fa-users"></i> {% trans "Vendedores Totales" %}</h3>
+            <p>{% trans "Vendedores activos bajo tu red" %}</p>
+            <p class="highlight">{{ total_vendedores|default:"0" }}</p>
+            <div class="quick-actions">
+                <a href="{% url 'ofertas:distributor_list_vendedor_margins' %}" 
+                   class="action-btn" 
+                   role="button" 
+                   aria-label="{% trans 'Gestionar Vendedores' %}" 
+                   tabindex="0">
+                    <i class="fa-solid fa-user-tie"></i> {% trans "Gestionar" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- Última Sincronización -->
+        <div class="card card-transactions">
+            <h3><i class="fa-solid fa-sync"></i> {% trans "Última Sincronización del Catálogo" %}</h3>
+            <p>{% trans "Última actualización desde Addinteli" %}</p>
+            {% if last_sync %}
+                <p class="highlight">{{ last_sync|date:"Y-m-d H:i" }} UTC</p>
+            {% else %}
+                <p class="placeholder-text">{% trans "No se ha registrado ninguna sincronización aún." %}</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

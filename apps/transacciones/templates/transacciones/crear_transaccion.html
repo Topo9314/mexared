@@ -1,0 +1,402 @@
+{% extends 'layout/base_distribuidor.html' %}
+{% load i18n static widget_tweaks %}
+
+{% block title %}
+    {% trans "Crear Nueva Transacción" %} | MexaRed
+{% endblock %}
+
+{% block extra_head %}
+    <style>
+        :root {
+            --primary-red: #f43f5e;
+            --primary-purple: #a855f7;
+            --text-gray: #6b7280;
+            --white: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.05);
+            --dark-bg: #1f2a44;
+            --dark-content: #2e3a59;
+            --dark-text-light: #d1d5db;
+            --error-red: #ef4444;
+            --success-green: #10b981;
+        }
+
+        .container-form {
+            max-width: 48rem;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .form-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px var(--shadow);
+            padding: 2rem;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .dark-mode .form-card {
+            background: rgba(46, 58, 89, 0.95);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+        }
+
+        .form-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dark-mode .form-title {
+            color: var(--dark-text-light);
+        }
+
+        .saldo-disponible {
+            background: #f3f4f6;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dark-mode .saldo-disponible {
+            background: var(--dark-content);
+            color: var(--dark-text-light);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .dark-mode .form-label {
+            color: var(--dark-text-light);
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background: #ffffff;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+        }
+
+        .dark-mode .form-input,
+        .dark-mode .form-select,
+        .dark-mode .form-textarea {
+            background: var(--dark-bg);
+            border-color: #4b5563;
+            color: var(--dark-text-light);
+        }
+
+        .error-message {
+            color: var(--error-red);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+
+        .form-button {
+            background: linear-gradient(135deg, var(--primary-red), var(--primary-purple));
+            color: var(--white);
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+        }
+
+        .form-button:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        .cancel-button {
+            background: #e5e7eb;
+            color: #1f2937;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .cancel-button:hover {
+            background: #d1d5db;
+        }
+
+        .dark-mode .cancel-button {
+            background: #4b5563;
+            color: var(--dark-text-light);
+        }
+
+        .dark-mode .cancel-button:hover {
+            background: #6b7280;
+        }
+
+        @media (max-width: 768px) {
+            .container-form {
+                padding: 0 1rem;
+            }
+
+            .form-title {
+                font-size: 1.5rem;
+            }
+
+            .form-card {
+                padding: 1.5rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .form-button, .cancel-button {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        /* Accessibility */
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus,
+        .form-button:focus,
+        .cancel-button:focus {
+            outline: 2px solid var(--primary-purple);
+            outline-offset: 2px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container-form">
+    <div class="form-card">
+        <h1 class="form-title">
+            <i class="fas fa-money-bill-wave"></i> {% trans "Crear Nueva Transacción" %}
+        </h1>
+
+        <div class="saldo-disponible">
+            <i class="fas fa-wallet"></i>
+            <strong>{% trans "Saldo Disponible:" %}</strong> {{ saldo_disponible }}
+        </div>
+
+        <form method="post" novalidate id="transaccion-form">
+            {% csrf_token %}
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="{{ form.tipo.id_for_label }}" class="form-label">
+                        {{ form.tipo.label }}
+                    </label>
+                    {% render_field form.tipo class="form-select" %}
+                    {% if form.tipo.errors %}
+                        <p class="error-message">{{ form.tipo.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.monto.id_for_label }}" class="form-label">
+                        {{ form.monto.label }}
+                    </label>
+                    {% render_field form.monto class="form-input" %}
+                    {% if form.monto.errors %}
+                        <p class="error-message">{{ form.monto.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.moneda.id_for_label }}" class="form-label">
+                        {{ form.moneda.label }}
+                    </label>
+                    {% render_field form.moneda class="form-select" %}
+                    {% if form.moneda.errors %}
+                        <p class="error-message">{{ form.moneda.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.receptor.id_for_label }}" class="form-label">
+                        {{ form.receptor.label }}
+                    </label>
+                    {% render_field form.receptor class="form-select" %}
+                    {% if form.receptor.errors %}
+                        <p class="error-message">{{ form.receptor.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.motivo.id_for_label }}" class="form-label">
+                        {{ form.motivo.label }}
+                    </label>
+                    {% render_field form.motivo class="form-select" %}
+                    {% if form.motivo.errors %}
+                        <p class="error-message">{{ form.motivo.errors|striptags }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-group" id="comentario-reverso-group" style="display: none;" aria-hidden="true">
+                <label for="{{ form.comentario_reverso.id_for_label }}" class="form-label">
+                    {{ form.comentario_reverso.label }}
+                </label>
+                {% render_field form.comentario_reverso class="form-textarea" %}
+                {% if form.comentario_reverso.errors %}
+                    <p class="error-message">{{ form.comentario_reverso.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                    {{ form.descripcion.label }}
+                </label>
+                {% render_field form.descripcion class="form-textarea" %}
+                {% if form.descripcion.errors %}
+                    <p class="error-message">{{ form.descripcion.errors|striptags }}</p>
+                {% endif %}
+            </div>
+
+            {% if form.non_field_errors %}
+                <div class="error-message">
+                    {{ form.non_field_errors|striptags }}
+                </div>
+            {% endif %}
+
+            <div class="flex justify-end gap-1rem">
+                <a href="{% url 'transacciones:listar' %}" class="cancel-button">
+                    {% trans "Cancelar" %}
+                </a>
+                <button type="submit" class="form-button" id="submit-button">
+                    {% trans "Guardar Transacción" %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('transaccion-form');
+        const montoInput = form.querySelector('#id_monto');
+        const tipoSelect = form.querySelector('#id_tipo');
+        const receptorSelect = form.querySelector('#id_receptor');
+        const comentarioReversoInput = form.querySelector('#id_comentario_reverso');
+        const comentarioReversoGroup = document.getElementById('comentario-reverso-group');
+        const submitButton = document.getElementById('submit-button');
+        const saldoDisponible = parseFloat('{{ request.user.perfil_distribuidor_rel.saldo_actual|floatformat:2 }}');
+
+        // Función para mostrar/ocultar el campo comentario_reverso
+        function toggleComentario() {
+            const tipo = tipoSelect.value.toUpperCase();
+            const isReversoOrRetiro = tipo === 'REVERSO' || tipo === 'RETIRO';
+            comentarioReversoGroup.style.display = isReversoOrRetiro ? 'block' : 'none';
+            comentarioReversoGroup.setAttribute('aria-hidden', isReversoOrRetiro ? 'false' : 'true');
+        }
+
+        // Validar el formulario
+        const validarFormulario = () => {
+            const monto = parseFloat(montoInput.value) || 0;
+            const tipo = tipoSelect.value;
+            const receptor = receptorSelect.value;
+
+            // Validar monto
+            if (['ASIGNACION', 'RETIRO', 'CONSUMO_API'].includes(tipo) && monto > saldoDisponible) {
+                montoInput.classList.add('border-red-500');
+                submitButton.disabled = true;
+                showToast('{% trans "El monto excede el saldo disponible." %}', 'error');
+                return;
+            } else {
+                montoInput.classList.remove('border-red-500');
+            }
+
+            // Validar receptor para asignaciones y reversos
+            if (['ASIGNACION', 'REVERSO'].includes(tipo) && !receptor) {
+                receptorSelect.classList.add('border-red-500');
+                submitButton.disabled = true;
+                showToast('{% trans "Debe seleccionar un receptor para asignaciones o reversos." %}', 'error');
+            } else {
+                receptorSelect.classList.remove('border-red-500');
+            }
+
+            submitButton.disabled = false;
+        };
+
+        // Validar al enviar el formulario
+        form.addEventListener('submit', (e) => {
+            const monto = parseFloat(montoInput.value) || 0;
+            const tipo = tipoSelect.value;
+            if (['ASIGNACION', 'RETIRO', 'CONSUMO_API'].includes(tipo) && monto <= 0) {
+                e.preventDefault();
+                showToast('{% trans "El monto debe ser mayor a cero." %}', 'error');
+            }
+            if (['REVERSO', 'RETIRO'].includes(tipo) && !comentarioReversoInput.value.trim()) {
+                e.preventDefault();
+                comentarioReversoInput.classList.add('border-red-500');
+                showToast('{% trans "Debe ingresar un comentario para el reverso o retiro." %}', 'error');
+            } else {
+                comentarioReversoInput.classList.remove('border-red-500');
+            }
+        });
+
+        // Añadir listeners para validaciones dinámicas
+        montoInput.addEventListener('input', validarFormulario);
+        tipoSelect.addEventListener('change', () => {
+            validarFormulario();
+            toggleComentario();
+        });
+        receptorSelect.addEventListener('change', validarFormulario);
+
+        // Inicializar estado del campo comentario_reverso
+        toggleComentario();
+    });
+</script>
+{% endblock %}

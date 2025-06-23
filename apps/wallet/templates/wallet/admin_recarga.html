@@ -1,0 +1,211 @@
+{% extends 'layout/base_distribuidor.html' %}
+{% load static i18n widget_tweaks %}
+
+{% block title %}
+    {% translate "Recargar Saldo - Admin" %}
+{% endblock %}
+
+{% block extra_head %}
+    <!-- Bootstrap Icons para íconos consistentes -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" integrity="sha384-tViUnnbYAV00FLIhhi3v/dWt3Jxw4gZQcNoSCxCIFNJVCueV8Kz9kImNiF5ewPUa" crossorigin="anonymous">
+    <!-- Estilos personalizados -->
+    <style>
+        .admin-recarga-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #1a3c34;
+        }
+        .form-control, .form-select {
+            border-radius: 0.5rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+        .alert {
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .btn-success {
+            background: linear-gradient(90deg, #28a745, #218838);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
+        }
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+        .btn-outline-secondary {
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+        }
+        .error-message {
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        @media (max-width: 576px) {
+            .admin-recarga-container {
+                padding: 1rem;
+            }
+            .btn-success, .btn-outline-secondary {
+                width: 100%;
+            }
+        }
+        /* Modo oscuro */
+        @media (prefers-color-scheme: dark) {
+            .form-label {
+                color: #e0e0e0;
+            }
+            .form-control, .form-select {
+                background-color: #2e3a59;
+                color: #e0e0e0;
+                border-color: #4a5568;
+            }
+            .form-control:focus, .form-select:focus {
+                border-color: #a855f7;
+                box-shadow: 0 0 0 0.2rem rgba(168, 85, 247, 0.25);
+            }
+            .card {
+                background: #1a202c;
+                border-color: #4a5568;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-recarga-container">
+    <!-- Encabezado -->
+    <h2 class="mb-4 text-center text-primary" aria-label="{% translate 'Formulario para recargar saldo' %}">
+        {% translate "Recargar Saldo" %}
+    </h2>
+
+    <!-- Mensajes de Django -->
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" aria-live="assertive">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% translate 'Cerrar alerta' %}"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Formulario -->
+    <div class="card shadow-lg border-0">
+        <div class="card-body p-4">
+            <form method="post" novalidate id="recargaForm" aria-describedby="formInstructions">
+                {% csrf_token %}
+                <p id="formInstructions" class="visually-hidden">
+                    {% translate "Complete los campos para recargar saldo en la billetera del usuario seleccionado." %}
+                </p>
+
+                <!-- Campo: Usuario Destino -->
+                <div class="mb-4">
+                    <label for="{{ form.usuario.id_for_label }}" class="form-label">
+                        {% translate "Usuario Destino" %}
+                        <span class="text-danger" aria-hidden="true">*</span>
+                    </label>
+                    {% render_field form.usuario class="form-select" aria-required="true" %}
+                    {% if form.usuario.errors %}
+                        <div class="text-danger error-message" role="alert">
+                            {% for error in form.usuario.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        {% translate "Seleccione el usuario cuya billetera será recargada." %}
+                    </small>
+                </div>
+
+                <!-- Campo: Monto -->
+                <div class="mb-4">
+                    <label for="{{ form.monto.id_for_label }}" class="form-label">
+                        {% translate "Monto a Recargar (MXN)" %}
+                        <span class="text-danger" aria-hidden="true">*</span>
+                    </label>
+                    {% render_field form.monto class="form-control" placeholder="Ejemplo: 1000.00" aria-required="true" %}
+                    {% if form.monto.errors %}
+                        <div class="text-danger error-message" role="alert">
+                            {% for error in form.monto.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        {% translate "Ingrese el monto en pesos mexicanos." %}
+                    </small>
+                </div>
+
+                <!-- Campo: Referencia Externa -->
+                <div class="mb-4">
+                    <label for="{{ form.referencia.id_for_label }}" class="form-label">
+                        {% translate "Referencia Externa (Opcional)" %}
+                    </label>
+                    {% render_field form.referencia class="form-control" placeholder="Ejemplo: MP-1234567890" %}
+                    {% if form.referencia.errors %}
+                        <div class="text-danger error-message" role="alert">
+                            {% for error in form.referencia.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <small class="form-text text-muted">
+                        {% translate "Identificador externo, como un ID de transacción de MercadoPago." %}
+                    </small>
+                </div>
+
+                <!-- Botón de Envío -->
+                <div class="d-grid gap-2 mb-3">
+                    <button type="submit" class="btn btn-success" aria-label="{% translate 'Confirmar recarga de saldo' %}">
+                        <i class="bi bi-cash-coin me-2"></i>{% translate "Recargar Saldo" %}
+                    </button>
+                </div>
+
+                <!-- Botón de Regreso -->
+                <div class="text-center">
+                    <a href="{% url 'wallet:dashboard' %}" class="btn btn-outline-secondary" aria-label="{% translate 'Regresar al panel de control' %}">
+                        <i class="bi bi-arrow-left-circle me-2"></i>{% translate "Regresar al Dashboard" %}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript para validación del lado del cliente -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('recargaForm');
+    form.addEventListener('submit', (event) => {
+        const montoInput = form.querySelector('#id_monto');
+        const montoValue = parseFloat(montoInput.value);
+        if (montoValue <= 0 || isNaN(montoValue)) {
+            event.preventDefault();
+            const errorDiv = montoInput.parentElement.querySelector('.error-message') || document.createElement('div');
+            errorDiv.className = 'text-danger error-message';
+            errorDiv.textContent = '{% translate "El monto debe ser mayor a cero." %}';
+            montoInput.parentElement.appendChild(errorDiv);
+            montoInput.focus();
+        }
+    });
+
+    // Limpieza de mensajes de error al escribir
+    form.querySelectorAll('input, select').forEach(input => {
+        input.addEventListener('input', () => {
+            const errorDiv = input.parentElement.querySelector('.error-message');
+            if (errorDiv) errorDiv.remove();
+        });
+    });
+});
+</script>
+{% endblock %}

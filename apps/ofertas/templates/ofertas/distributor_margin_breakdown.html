@@ -1,0 +1,365 @@
+{% extends "layout/base_distribuidor.html" %}
+{% load static i18n %}
+
+{% block title %}
+    {{ margin.oferta.nombre }} | {% trans "Detalle de Oferta" %} | Panel Distribuidor MexaRed
+{% endblock %}
+
+{% block content %}
+    <style>
+        /* Estilos Globales */
+        .dashboard-container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: clamp(1rem, 2vw, 1.5rem) clamp(0.5rem, 1vw, 1rem);
+            background: linear-gradient(135deg, #f9fafb, #ffffff);
+            border-radius: 0.75rem;
+            box-shadow: 0 0.3rem 1.5rem rgba(0, 0, 0, 0.1);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .dashboard-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            padding: clamp(0.75rem, 1.5vw, 1rem);
+            background: linear-gradient(90deg, #6b46c1, #805ad5);
+            border-radius: 0.5rem;
+            box-shadow: 0 0.2rem 0.75rem rgba(107, 70, 193, 0.3);
+            align-items: center;
+        }
+
+        .dashboard-title {
+            color: #fff;
+            font-size: clamp(1.25rem, 4vw, 1.75rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.075rem;
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            margin: 0;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+            color: #e2e8f0;
+        }
+
+        .breadcrumb a {
+            color: #e2e8f0;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .breadcrumb a:hover {
+            color: #ffffff;
+        }
+
+        .plan-card {
+            background: #fff;
+            border-radius: 0.5rem;
+            padding: clamp(0.75rem, 1.5vw, 1rem);
+            box-shadow: 0 0.2rem 0.75rem rgba(0, 0, 0, 0.08);
+            margin-bottom: 1.5rem;
+        }
+
+        .plan-card h2 {
+            font-size: clamp(1.1rem, 3vw, 1.25rem);
+            font-weight: 700;
+            color: #1f2a44;
+            margin-bottom: 0.75rem;
+        }
+
+        .plan-card p {
+            font-size: clamp(0.85rem, 2vw, 0.9rem);
+            color: #374151;
+            line-height: 1.5;
+        }
+
+        .financial-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .financial-card {
+            background: #fff;
+            border-radius: 0.5rem;
+            padding: clamp(0.75rem, 1.5vw, 1rem);
+            box-shadow: 0 0.2rem 0.75rem rgba(0, 0, 0, 0.08);
+        }
+
+        .financial-card h3 {
+            font-size: clamp(1rem, 2.5vw, 1.1rem);
+            font-weight: 700;
+            color: #1f2a44;
+            margin-bottom: 0.75rem;
+        }
+
+        .financial-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .financial-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            font-size: clamp(0.85rem, 2vw, 0.9rem);
+            color: #374151;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        .financial-list li:last-child {
+            border-bottom: none;
+        }
+
+        .financial-list li strong {
+            color: #1f2a44;
+            font-weight: 600;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            cursor: help;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: clamp(8rem, 30vw, 10rem);
+            background-color: #1f2a44;
+            color: #fff;
+            text-align: center;
+            border-radius: 0.25rem;
+            padding: 0.4rem;
+            position: absolute;
+            z-index: 10;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            font-size: clamp(0.7rem, 1.6vw, 0.75rem);
+            box-shadow: 0 0.15rem 0.4rem rgba(0, 0, 0, 0.2);
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .policy-alert {
+            background: #fefcbf;
+            border-left: 4px solid #d69e2e;
+            padding: clamp(0.5rem, 1vw, 0.75rem);
+            border-radius: 0.375rem;
+            margin-top: 1.5rem;
+        }
+
+        .policy-alert p {
+            font-size: clamp(0.85rem, 2vw, 0.9rem);
+            color: #744210;
+            margin: 0;
+        }
+
+        .policy-alert p.font-semibold {
+            color: #744210;
+        }
+
+        /* Modo Oscuro */
+        .dark-mode .dashboard-container {
+            background: linear-gradient(135deg, #111827, #1f2a44);
+        }
+
+        .dark-mode .plan-card,
+        .dark-mode .financial-card {
+            background: #1f2a44;
+        }
+
+        .dark-mode .plan-card h2,
+        .dark-mode .financial-card h3,
+        .dark-mode .financial-list li strong {
+            color: #d1d5db;
+        }
+
+        .dark-mode .plan-card p,
+        .dark-mode .financial-list li {
+            color: #9ca3af;
+        }
+
+        .dark-mode .financial-list li {
+            border-bottom: 1px solid #374151;
+        }
+
+        .dark-mode .tooltip .tooltip-text {
+            background-color: #374151;
+        }
+
+        .dark-mode .policy-alert {
+            background: #744210;
+            border-left-color: #d69e2e;
+        }
+
+        .dark-mode .policy-alert p,
+        .dark-mode .policy-alert p.font-semibold {
+            color: #fefcbf;
+        }
+
+        /* Diseño Responsivo */
+        @media (min-width: 640px) {
+            .dashboard-container {
+                padding: 1rem;
+            }
+
+            .dashboard-header {
+                flex-direction: row;
+                justify-content: space-between;
+                padding: 0.75rem;
+            }
+
+            .dashboard-title {
+                text-align: left;
+            }
+
+            .financial-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .dashboard-container {
+                padding: 1.5rem;
+                max-width: 90vw;
+            }
+
+            .dashboard-header {
+                padding: 1rem;
+            }
+
+            .plan-card,
+            .financial-card {
+                padding: 1.25rem;
+            }
+        }
+    </style>
+
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">{{ margin.oferta.nombre }}</h1>
+            <nav class="breadcrumb">
+                <a href="{% url 'ofertas:distributor_list_offers' %}" aria-label="{% trans 'Volver a la lista de ofertas' %}">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i> {% trans "Lista de Ofertas" %}
+                </a>
+                <span>/</span>
+                <span>{{ margin.oferta.nombre }}</span>
+            </nav>
+        </div>
+
+        {% if price_policy_message %}
+            <div class="policy-alert" role="alert">
+                <p class="font-semibold">{% trans "Aviso de Política de Precios" %}</p>
+                <p>{{ price_policy_message }}</p>
+            </div>
+        {% endif %}
+
+        <div class="plan-card">
+            <h2>{% trans "Resumen del Plan" %}</h2>
+            {% if include_description %}
+                <p><strong>{% trans "Descripción:" %}</strong> {{ descripcion|default:"-" }}</p>
+            {% endif %}
+            {% if include_duration %}
+                <p><strong>{% trans "Duración:" %}</strong> {{ duracion }} {% trans "días" %}</p>
+            {% endif %}
+        </div>
+
+        <div class="financial-grid">
+            <div class="financial-card">
+                <h3>{% trans "Precios del Plan" %}</h3>
+                <ul class="financial-list">
+                    <li>
+                        <span class="tooltip">
+                            {% trans "Costo Distribuidor" %}
+                            <span class="tooltip-text">{% trans "Precio base que paga el distribuidor por la oferta." %}</span>
+                        </span>
+                        <strong>{{ breakdown.precio_distribuidor|floatformat:2 }} {{ currency }}</strong>
+                    </li>
+                    <li>
+                        <span class="tooltip">
+                            {% trans "Precio Vendedor" %}
+                            <span class="tooltip-text">{% trans "Precio asignado para los vendedores, ajustado por el distribuidor." %}</span>
+                        </span>
+                        <strong>{{ breakdown.precio_vendedor|floatformat:2 }} {{ currency }}</strong>
+                    </li>
+                    <li>
+                        <span class="tooltip">
+                            {% trans "Precio Cliente" %}
+                            <span class="tooltip-text">{% trans "Precio final que paga el cliente por la oferta." %}</span>
+                        </span>
+                        <strong>{{ breakdown.precio_cliente|floatformat:2 }} {{ currency }}</strong>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="financial-card">
+                <h3>{% trans "Comisiones y Márgenes" %}</h3>
+                <ul class="financial-list">
+                    {% if include_commissions %}
+                        <li>
+                            <span class="tooltip">
+                                {% trans "Comisión Distribuidor" %}
+                                <span class="tooltip-text">{% trans "Ganancia neta del distribuidor por cada oferta vendida." %}</span>
+                            </span>
+                            <strong>{{ breakdown.comision_distribuidor|floatformat:2 }} {{ currency }}</strong>
+                        </li>
+                        <li>
+                            <span class="tooltip">
+                                {% trans "Comisión Vendedor" %}
+                                <span class="tooltip-text">{% trans "Ganancia neta del vendedor por cada oferta vendida." %}</span>
+                            </span>
+                            <strong>{{ breakdown.comision_vendedor|floatformat:2 }} {{ currency }}</strong>
+                        </li>
+                        <li>
+                            <span class="tooltip">
+                                {% trans "Margen Plataforma" %}
+                                <span class="tooltip-text">{% trans "Margen retenido por la plataforma para costos operativos." %}</span>
+                            </span>
+                            <strong>{{ breakdown.margen_admin|floatformat:2 }} {{ currency }}</strong>
+                        </li>
+                        <li>
+                            <span class="tooltip">
+                                {% trans "Margen Distribuidor" %}
+                                <span class="tooltip-text">{% trans "Margen total disponible para el distribuidor antes de asignar a vendedores." %}</span>
+                            </span>
+                            <strong>{{ breakdown.margen_distribuidor|floatformat:2 }} {{ currency }}</strong>
+                        </li>
+                        <li>
+                            <span class="tooltip">
+                                {% trans "Margen Vendedor" %}
+                                <span class="tooltip-text">{% trans "Margen asignado al vendedor por el distribuidor." %}</span>
+                            </span>
+                            <strong>{{ breakdown.margen_vendedor|floatformat:2 }} {{ currency }}</strong>
+                        </li>
+                        <li>
+                            <span class="tooltip">
+                                {% trans "Margen Negociable" %}
+                                <span class="tooltip-text">{% trans "Margen disponible para negociar con vendedores adicionales." %}</span>
+                            </span>
+                            <strong>{{ breakdown.margen_negociable|floatformat:2 }} {{ currency }}</strong>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}

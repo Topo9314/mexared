@@ -1,0 +1,1120 @@
+{% extends 'layout/base_distribuidor.html' %}
+{% load static i18n widget_tweaks %}
+
+{% block title %}
+    {% translate "Panel de Billetera" %}
+{% endblock %}
+
+{% block extra_head %}
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" integrity="sha384-tViUnnbYAV00FLIhhi3v/dWt3Jxw4gZQcNoSCxCIFNJVCueV8Kz9kImNiF5ewPUa" crossorigin="anonymous">
+    <!-- Chart.js for interactive charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" integrity="sha384-wvUjJBC6tE3oD1pWftae5bdvG9gM6a0cJqD9fJ1x5r0uWJq7j6b7b5fJ5qD9fJ1x" crossorigin="anonymous" defer></script>
+    <!-- Custom Styles -->
+    <style>
+        :root {
+            --mexared-green: #00A862;
+            --mexared-orange: #FF5722;
+            --mexared-blue: #2196F3;
+            --white: #FFFFFF;
+            --dark-bg: #0F172A;
+            --dark-sidebar: #1E293B;
+            --gray-dark: #1F2937;
+            --gray-medium: #64748B;
+            --gray-light: #F3F4F6;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --shadow-dark: rgba(0, 0, 0, 0.2);
+            --transition-speed: 0.4s;
+            --font-size-xs: 12px;
+            --font-size-sm: 14px;
+            --font-size-md: 16px;
+            --font-size-lg: 18px;
+            --font-size-xl: 20px;
+        }
+
+        .dark-mode {
+            --white: #F9FAFB;
+            --gray-light: #374151;
+            --gray-medium: #9CA3AF;
+            --gray-dark: #D1D5DB;
+            --shadow-light: rgba(255, 255, 255, 0.05);
+            --shadow-dark: rgba(255, 255, 255, 0.1);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 32px 0;
+            max-width: 1440px;
+            margin: 0 auto;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: -0.02em;
+        }
+
+        .card {
+            background: var(--white);
+            border: 1px solid var(--gray-light);
+            border-radius: 16px;
+            box-shadow: 0 6px 16px var(--shadow-light);
+            padding: 24px;
+            transition: transform var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1), box-shadow var(--transition-speed) ease;
+            animation: fadeInCard 0.8s cubic-bezier(0.4, 0, 0.2, 1) var(--delay);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:nth-child(1) { --delay: 0.1s; }
+        .card:nth-child(2) { --delay: 0.2s; }
+        .card:nth-child(3) { --delay: 0.3s; }
+        .card:nth-child(4) { --delay: 0.4s; }
+        .card:nth-child(5) { --delay: 0.5s; }
+
+        .card-transactions.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .dark-mode .card {
+            background: var(--dark-bg);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 6px 16px var(--shadow-light);
+        }
+
+        @keyframes fadeInCard {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 24px var(--shadow-dark);
+        }
+
+        .dark-mode .card:hover {
+            box-shadow: 0 12px 24px var(--shadow-dark);
+        }
+
+        .card h3 {
+            font-size: var(--font-size-lg);
+            font-weight: 700;
+            color: var(--gray-dark);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dark-mode .card h3 {
+            color: var(--gray-dark);
+        }
+
+        .card h2 {
+            font-size: var(--font-size-xl);
+            font-weight: 800;
+            color: var(--gray-dark);
+            margin-bottom: 16px;
+        }
+
+        .dark-mode .card h2 {
+            color: var(--gray-dark);
+        }
+
+        .card p {
+            font-size: var(--font-size-sm);
+            color: var(--gray-medium);
+            margin-bottom: 12px;
+        }
+
+        .dark-mode .card p {
+            color: var(--gray-medium);
+        }
+
+        .card .highlight {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .dark-mode .card .highlight {
+            color: var(--gray-dark);
+        }
+
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 16px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            background: var(--mexared-green);
+            color: var(--white);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 168, 98, 0.3);
+        }
+
+        .action-btn:hover {
+            background: var(--mexared-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+        }
+
+        .action-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300%;
+            height: 300%;
+            background: rgba(255, 255, 255, 0.15);
+            transform: translate(-50%, -50%) rotate(45deg);
+            transition: width var(--transition-speed) ease;
+        }
+
+        .action-btn:hover::after {
+            width: 0;
+        }
+
+        .action-btn.disabled {
+            background: var(--gray-light);
+            color: var(--gray-medium);
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .card-balance {
+            border: 2px solid var(--mexared-green);
+            background: var(--white);
+            color: var(--gray-medium);
+        }
+
+        .dark-mode .card-balance {
+            background: var(--dark-bg);
+            border-color: var(--mexared-green);
+            color: var(--gray-medium);
+        }
+
+        .card-transactions,
+        .card-chart {
+            background: var(--white);
+        }
+
+        .dark-mode .card-transactions,
+        .dark-mode .card-chart {
+            background: var(--dark-bg);
+        }
+
+        .recent-transactions {
+            margin-top: 20px;
+        }
+
+        .recent-transactions h4 {
+            font-size: var(--font-size-md);
+            font-weight: 700;
+            color: var(--gray-dark);
+            margin-bottom: 16px;
+        }
+
+        .dark-mode .recent-transactions h4 {
+            color: var(--gray-dark);
+        }
+
+        .movements-list {
+            width: 100%;
+            border-radius: 12px;
+            background: var(--white);
+            overflow-x: hidden;
+        }
+
+        .dark-mode .movements-list {
+            background: var(--dark-bg);
+        }
+
+        .movements-header,
+        .movement-item {
+            display: grid;
+            grid-template-columns: 20% 20% 20% 15% 15% 10%;
+            gap: 12px;
+            padding: 16px 20px;
+            align-items: center;
+            font-size: var(--font-size-sm);
+            min-width: 100%;
+        }
+
+        .movements-header {
+            background: var(--gray-light);
+            font-weight: 700;
+            color: var(--gray-dark);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            border-bottom: 2px solid var(--gray-light);
+        }
+
+        .dark-mode .movements-header {
+            background: var(--gray-light);
+            color: var(--gray-dark);
+            border-bottom-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .movements-header span {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .movements-header span::after {
+            content: '\f0dc';
+            font-family: 'Bootstrap Icons';
+            font-size: var(--font-size-xs);
+            color: var(--gray-medium);
+            transition: transform var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .movements-header span:hover::after {
+            transform: rotate(180deg);
+        }
+
+        .movement-item {
+            background: transparent;
+            border-bottom: 1px solid var(--gray-light);
+            transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideInRow 0.6s cubic-bezier(0.4, 0, 0.2, 1) var(--row-delay);
+        }
+
+        .movement-item:nth-child(1) { --row-delay: 0.1s; }
+        .movement-item:nth-child(2) { --row-delay: 0.2s; }
+        .movement-item:nth-child(3) { --row-delay: 0.3s; }
+        .movement-item:nth-child(4) { --row-delay: 0.4s; }
+        .movement-item:nth-child(5) { --row-delay: 0.5s; }
+
+        @keyframes slideInRow {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .dark-mode .movement-item {
+            border-bottom-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .movement-item:nth-child(even) {
+            background: rgba(243, 244, 246, 0.5);
+        }
+
+        .dark-mode .movement-item:nth-child(even) {
+            background: rgba(31, 41, 55, 0.5);
+        }
+
+        .movement-item:hover {
+            background: rgba(33, 150, 243, 0.1);
+            transform: scale(1.01);
+        }
+
+        .dark-mode .movement-item:hover {
+            background: rgba(33, 150, 243, 0.15);
+        }
+
+        .movement-item:last-child {
+            border-bottom: none;
+        }
+
+        .movement-item .vendor,
+        .movement-item .date,
+        .movement-item .type,
+        .movement-item .notes {
+            color: var(--gray-medium);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .dark-mode .movement-item .vendor,
+        .dark-mode .movement-item .date,
+        .dark-mode .movement-item .type,
+        .dark-mode .movement-item .notes {
+            color: var(--gray-medium);
+        }
+
+        .movement-item .vendor.admin {
+            color: var(--mexared-blue);
+            font-weight: 600;
+        }
+
+        .dark-mode .movement-item .vendor.admin {
+            color: var(--mexared-blue);
+        }
+
+        .movement-item .amount {
+            color: var(--mexared-green);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .movement-item .vendor:hover::after,
+        .movement-item .type:hover::after,
+        .movement-item .notes:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gray-dark);
+            color: var(--white);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: var(--font-size-xs);
+            white-space: nowrap;
+            z-index: 10;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .dark-mode .movement-item .vendor:hover::after,
+        .dark-mode .movement-item .type:hover::after,
+        .dark-mode .movement-item .notes:hover::after {
+            background: var(--white);
+            color: var(--gray-dark);
+        }
+
+        .movement-item .status {
+            display: inline-flex;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: var(--font-size-xs);
+            font-weight: 600;
+            text-transform: uppercase;
+            position: relative;
+        }
+
+        .movement-item .status:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gray-dark);
+            color: var(--white);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: var(--font-size-xs);
+            white-space: nowrap;
+            z-index: 10;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .dark-mode .movement-item .status:hover::after {
+            background: var(--white);
+            color: var(--gray-dark);
+        }
+
+        .status.completed {
+            background: rgba(0, 168, 98, 0.2);
+            color: var(--mexared-green);
+        }
+
+        .status.pending {
+            background: rgba(255, 87, 34, 0.2);
+            color: var(--mexared-orange);
+        }
+
+        .status.failed {
+            background: rgba(239, 68, 68, 0.2);
+            color: #EF4444;
+        }
+
+        .filter-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity var(--transition-speed) ease;
+            opacity: 0;
+            background: var(--white);
+            border-radius: 12px;
+            padding: 0 20px;
+            margin-bottom: 20px;
+        }
+
+        .filter-panel.active {
+            max-height: 400px;
+            opacity: 1;
+            padding: 20px;
+        }
+
+        .dark-mode .filter-panel {
+            background: var(--dark-bg);
+        }
+
+        .filter-toggle {
+            background: var(--mexared-blue);
+            color: var(--white);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+        }
+
+        .filter-toggle:hover {
+            background: var(--mexared-orange);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(255, 87, 34, 0.4);
+        }
+
+        .filter-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            align-items: end;
+        }
+
+        .filter-form .form-group {
+            margin-bottom: 0;
+            position: relative;
+        }
+
+        .filter-form .form-label {
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            color: var(--gray-dark);
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .dark-mode .filter-form .form-label {
+            color: var(--gray-dark);
+        }
+
+        .filter-form .form-control,
+        .filter-form .form-select {
+            border: 1px solid var(--gray-light);
+            border-radius: 10px;
+            font-size: var(--font-size-sm);
+            padding: 8px 12px;
+            transition: all var(--transition-speed) ease;
+            background: var(--white);
+            position: relative;
+            z-index: 1;
+        }
+
+        .dark-mode .filter-form .form-control,
+        .dark-mode .filter-form .form-select {
+            background: var(--dark-bg);
+            color: var(--gray-dark);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .filter-form .form-control:focus,
+        .filter-form .form-select:focus {
+            border-color: var(--mexared-blue);
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+            outline: none;
+        }
+
+        .filter-form .btn-primary {
+            background: var(--mexared-blue);
+            border: none;
+            padding: 8px 16px;
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+        }
+
+        .filter-form .btn-primary:hover {
+            background: var(--mexared-orange);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(255, 87, 34, 0.4);
+        }
+
+        .filter-form .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300%;
+            height: 300%;
+            background: rgba(255, 255, 255, 0.15);
+            transform: translate(-50%, -50%) rotate(45deg);
+            transition: width var(--transition-speed) ease;
+        }
+
+        .filter-form .btn-primary:hover::after {
+            width: 0;
+        }
+
+        .filter-form .btn-outline-secondary {
+            border: 1px solid var(--gray-medium);
+            color: var(--gray-medium);
+            padding: 8px 16px;
+            font-size: var(--font-size-sm);
+            border-radius: 10px;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .dark-mode .filter-form .btn-outline-secondary {
+            border-color: var(--gray-medium);
+            color: var(--gray-medium);
+        }
+
+        .filter-form .btn-outline-secondary:hover {
+            background: var(--gray-light);
+            color: var(--gray-dark);
+        }
+
+        .dark-mode .filter-form .btn-outline-secondary:hover {
+            background: var(--gray-medium);
+            color: var(--white);
+        }
+
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+            aspect-ratio: 2 / 1;
+            background: transparent;
+        }
+
+        .card-chart canvas {
+            width: 100% !important;
+            height: auto !important;
+            display: block;
+        }
+
+        .chart-wrapper.loading::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--gray-light) 25%, #F3F4F6 50%, var(--gray-light) 75%);
+            background-size: 200% 100%;
+            animation: skeletonLoading 1.8s ease-in-out infinite;
+            border-radius: 12px;
+        }
+
+        @keyframes skeletonLoading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .pagination .page-link {
+            color: var(--gray-dark);
+            border: 1px solid var(--gray-light);
+            border-radius: 8px;
+            margin: 0 4px;
+            padding: 8px 12px;
+            transition: all var(--transition-speed) ease;
+            font-size: var(--font-size-sm);
+        }
+
+        .dark-mode .pagination .page-link {
+            color: var(--gray-dark);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .pagination .page-link:hover {
+            background: var(--mexared-blue);
+            color: var(--white);
+            border-color: var(--mexared-blue);
+        }
+
+        .pagination .page-item.active .page-link {
+            background: var(--mexared-green);
+            border-color: var(--mexared-green);
+            color: var(--white);
+        }
+
+        .pagination .page-item.disabled .page-link {
+            background: var(--gray-light);
+            color: var(--gray-medium);
+            border-color: var(--gray-light);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .movements-header,
+            .movement-item {
+                grid-template-columns: 18% 18% 20% 15% 15% 14%;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard {
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            }
+
+            .movements-header,
+            .movement-item {
+                grid-template-columns: 17% 17% 20% 15% 15% 16%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .card h3,
+            .card h2 {
+                font-size: var(--font-size-md);
+            }
+
+            .action-btn {
+                font-size: var(--font-size-xs);
+                padding: 8px 16px;
+                width: 100%;
+            }
+
+            .movements-list {
+                overflow-x: auto;
+            }
+
+            .movements-header,
+            .movement-item {
+                grid-template-columns: 20% 25% 25% 15% 15%;
+                min-width: 600px;
+            }
+
+            .movements-header .notes,
+            .movement-item .notes {
+                display: none;
+            }
+
+            .filter-form {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 14px;
+            }
+
+            .card h3,
+            .card h2 {
+                font-size: var(--font-size-sm);
+            }
+
+            .card .highlight {
+                font-size: 1.3rem;
+            }
+
+            .movements-header,
+            .movement-item {
+                font-size: var(--font-size-xs);
+                padding: 10px 14px;
+            }
+
+            .filter-form .form-control,
+            .filter-form .form-select {
+                font-size: var(--font-size-xs);
+            }
+
+            .filter-toggle {
+                font-size: var(--font-size-xs);
+                padding: 8px 16px;
+            }
+
+            .movement-item .status {
+                padding: 4px 8px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .card {
+                padding: 12px;
+            }
+
+            .action-btn {
+                padding: 6px 12px;
+            }
+
+            .movements-header,
+            .movement-item {
+                padding: 8px 12px;
+            }
+        }
+
+        /* Accessibility */
+        .action-btn:focus,
+        .filter-toggle:focus,
+        .btn-primary:focus,
+        .btn-outline-secondary:focus,
+        .page-link:focus {
+            outline: 3px solid var(--mexared-blue);
+            outline-offset: 3px;
+            box-shadow: 0 0 0 4px rgba(33, 150, 243, 0.3);
+        }
+
+        /* Dynamic Highlight Color for Balance */
+        .card-balance .highlight {
+            color: var(--gray-medium);
+        }
+
+        .card-balance .highlight.saldo-disponible {
+            {% if saldo_disponible|floatformat:2|add:"0" >= 100 %}
+                color: var(--mexared-green);
+            {% elif saldo_disponible|floatformat:2|add:"0" < 100 and saldo_disponible|floatformat:2|add:"0" > 20 %}
+                color: var(--mexared-orange);
+            {% else %}
+                color: #EF4444;
+            {% endif %}
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <!-- Header -->
+    <div class="card card-transactions">
+        <h2 class="mb-4 text-center" aria-label="{% translate 'Panel de control de billetera' %}">
+            {% translate "Panel de Billetera" %}
+        </h2>
+        {% if not wallet %}
+            <p class="text-center" style="color: #EF4444;">{% translate "¡No tienes una billetera asociada. Contacta a soporte." %}</p>
+        {% else %}
+            <p class="text-center">{% translate "Bienvenido, " %}{{ user.get_full_name|default:user.username }}!</p>
+        {% endif %}
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+        <div class="card card-transactions">
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" aria-live="assertive">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% translate 'Cerrar alerta' %}"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Balance Cards -->
+    <div class="card card-balance">
+        <h3><i class="bi bi-wallet2"></i>{% translate "Saldo Disponible" %}</h3>
+        <p>{% translate "Fondos disponibles para transacciones" %}</p>
+        <p class="highlight saldo-disponible">{{ saldo_disponible|floatformat:2 }} MXN</p>
+    </div>
+
+    <div class="card card-balance">
+        <h3><i class="bi bi-lock-fill"></i>{% translate "Saldo Bloqueado" %}</h3>
+        <p>{% translate "Fondos retenidos" %}</p>
+        <p class="highlight">{{ saldo_bloqueado|floatformat:2 }} MXN</p>
+    </div>
+
+    <!-- Actions Card -->
+    <div class="card card-transactions">
+        <h3><i class="bi bi-gear"></i>{% translate "Acciones" %}</h3>
+        <p>{% translate "Operaciones disponibles según tu rol" %}</p>
+        <div class="quick-actions">
+            {% if user.rol == 'admin' or user.rol == 'distribuidor' %}
+                <a href="{% url 'wallet:recarga' %}" class="action-btn" aria-label="{% translate 'Recargar saldo' %}">
+                    <i class="bi bi-plus-circle"></i>{% translate "Recargar Saldo" %}
+                </a>
+            {% endif %}
+            {% if user.rol == 'admin' or user.rol == 'distribuidor' %}
+                <a href="{% url 'wallet:transferencia' %}" class="action-btn" aria-label="{% translate 'Transferir saldo' %}">
+                    <i class="bi bi-arrow-left-right"></i>{% translate "Transferir" %}
+                </a>
+            {% endif %}
+            {% if user.rol == 'admin' %}
+                <a href="{% url 'wallet:bloqueo' %}" class="action-btn" aria-label="{% translate 'Bloquear fondos' %}">
+                    <i class="bi bi-shield-lock"></i>{% translate "Bloqueo" %}
+                </a>
+                <a href="{% url 'wallet:desbloqueo' %}" class="action-btn" aria-label="{% translate 'Desbloquear fondos' %}">
+                    <i class="bi bi-unlock"></i>{% translate "Desbloqueo" %}
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Movements History Card with Integrated Filters -->
+    <div class="card card-transactions full-width">
+        <h3><i class="bi bi-history"></i>{% translate "Historial de Movimientos" %}</h3>
+        <p>{% translate "Últimos movimientos financieros" %}</p>
+        <button class="filter-toggle" onclick="toggleFilterPanel()" aria-label="{% translate 'Mostrar u ocultar filtros' %}">
+            <i class="bi bi-funnel"></i>{% translate "Filtrar Movimientos" %}
+        </button>
+        <div class="filter-panel" id="filterPanel">
+            <form method="GET" class="filter-form" id="filterForm" aria-label="{% translate 'Formulario para filtrar movimientos financieros' %}">
+                <div class="form-group">
+                    <label for="tipo" class="form-label">{% translate "Tipo de Movimiento" %}</label>
+                    <select name="tipo" id="tipo" class="form-select" aria-label="{% translate 'Seleccionar tipo de movimiento' %}">
+                        <option value="">{% translate "Todos los Tipos" %}</option>
+                        {% for key, label in tipo_movimientos %}
+                            <option value="{{ key }}" {% if filtro_tipo == key %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="fecha_inicio" class="form-label">{% translate "Desde" %}</label>
+                    <input type="date" name="fecha_inicio" id="fecha_inicio" value="{{ filtro_fecha_inicio|default_if_none:'' }}" class="form-control" aria-label="{% translate 'Fecha de inicio' %}">
+                </div>
+                <div class="form-group">
+                    <label for="fecha_fin" class="form-label">{% translate "Hasta" %}</label>
+                    <input type="date" name="fecha_fin" id="fecha_fin" value="{{ filtro_fecha_fin|default_if_none:'' }}" class="form-control" aria-label="{% translate 'Fecha de fin' %}">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary" aria-label="{% translate 'Aplicar filtros' %}">
+                        <i class="bi bi-funnel"></i>{% translate "Aplicar" %}
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()" aria-label="{% translate 'Limpiar filtros' %}">
+                        <i class="bi bi-x-circle"></i>{% translate "Limpiar" %}
+                    </button>
+                </div>
+                <div class="form-group">
+                    <a href="{% url 'wallet:export_movimientos' %}?tipo={{ filtro_tipo|default_if_none:'' }}&fecha_inicio={{ filtro_fecha_inicio|default_if_none:'' }}&fecha_fin={{ filtro_fecha_fin|default_if_none:'' }}" class="action-btn" aria-label="{% translate 'Exportar movimientos a CSV' %}">
+                        <i class="bi bi-download"></i>{% translate "Exportar CSV" %}
+                    </a>
+                </div>
+            </form>
+        </div>
+        <div class="recent-transactions">
+            <h4>{% translate "Movimientos Recientes" %}</h4>
+            <div class="movements-list">
+                <div class="movements-header">
+                    <span class="vendor">{% translate "Usuario" %}</span>
+                    <span class="type">{% translate "Tipo" %}</span>
+                    <span class="date">{% translate "Fecha" %}</span>
+                    <span class="amount">{% translate "Monto" %}</span>
+                    <span class="status">{% translate "Estado" %}</span>
+                    <span class="notes">{% translate "Notas" %}</span>
+                </div>
+                {% for movimiento in movimientos %}
+                    <div class="movement-item">
+                        <span class="vendor {% if movimiento.creado_por == 'admin' %}admin{% endif %}" data-tooltip="{% if movimiento.creado_por == 'admin' %}{% translate 'Administrador' %}{% else %}{{ movimiento.destino_username|default:movimiento.origen_username|default:'-' }}{% endif %}">
+                            {% if movimiento.creado_por == 'admin' %}
+                                {% translate "Administrador" %}
+                            {% else %}
+                                {{ movimiento.destino_username|default:movimiento.origen_username|default:"-" }}
+                            {% endif %}
+                        </span>
+                        <span class="type" data-tooltip="{% translate movimiento.tipo|default:'Desconocido' %}">
+                            {% translate movimiento.tipo|default:"Desconocido" %}
+                        </span>
+                        <span class="date">{{ movimiento.fecha|date:"Y-m-d H:i" }}</span>
+                        <span class="amount">${{ movimiento.monto|floatformat:2 }}</span>
+                        <span class="status {% if movimiento.conciliado %}completed{% else %}pending{% endif %}" data-tooltip="{% if movimiento.conciliado %}{% translate 'Completado' %}{% else %}{% translate 'Pendiente' %}{% endif %}">
+                            {% if movimiento.conciliado %}
+                                {% translate "Completado" %}
+                            {% else %}
+                                {% translate "Pendiente" %}
+                            {% endif %}
+                        </span>
+                        <span class="notes" data-tooltip="{% if movimiento.referencia %}{{ movimiento.referencia }}{% else %}{% translate 'Sin notas' %}{% endif %}">
+                            {% if movimiento.referencia %}
+                                {{ movimiento.referencia }}
+                            {% else %}
+                                {% translate "Sin notas" %}
+                            {% endif %}
+                        </span>
+                    </div>
+                {% empty %}
+                    <p class="text-center">{% translate "No se encontraron movimientos." %}</p>
+                {% endfor %}
+            </div>
+        </div>
+        <!-- Pagination -->
+        {% if movimientos.has_other_pages %}
+            <nav class="mt-4" aria-label="{% translate 'Navegación de páginas' %}">
+                <ul class="pagination justify-content-center">
+                    {% if movimientos.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ movimientos.previous_page_number }}{% if filtro_tipo %}&tipo={{ filtro_tipo }}{% endif %}{% if filtro_fecha_inicio %}&fecha_inicio={{ filtro_fecha_inicio }}{% endif %}{% if filtro_fecha_fin %}&fecha_fin={{ filtro_fecha_fin }}{% endif %}" aria-label="{% translate 'Página anterior' %}">«</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">«</span>
+                        </li>
+                    {% endif %}
+
+                    {% for num in movimientos.paginator.page_range %}
+                        {% if movimientos.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > movimientos.number|add:-3 and num < movimientos.number|add:3 %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if filtro_tipo %}&tipo={{ filtro_tipo }}{% endif %}{% if filtro_fecha_inicio %}&fecha_inicio={{ filtro_fecha_inicio }}{% endif %}{% if filtro_fecha_fin %}&fecha_fin={{ filtro_fecha_fin }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if movimientos.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ movimientos.next_page_number }}{% if filtro_tipo %}&tipo={{ filtro_tipo }}{% endif %}{% if filtro_fecha_inicio %}&fecha_inicio={{ filtro_fecha_inicio }}{% endif %}{% if filtro_fecha_fin %}&fecha_fin={{ filtro_fecha_fin }}{% endif %}" aria-label="{% translate 'Página siguiente' %}">»</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">»</span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+
+    <!-- Chart Card -->
+    <div class="card card-chart">
+        <h3><i class="bi bi-bar-chart"></i>{% translate "Resumen de Movimientos" %}</h3>
+        <p>{% translate "Distribución de movimientos por tipo" %}</p>
+        <div class="chart-wrapper loading">
+            <canvas id="movimientosChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Filter Form Validation
+    const filterForm = document.getElementById('filterForm');
+    filterForm.addEventListener('submit', (event) => {
+        const fechaInicio = document.getElementById('fecha_inicio').value;
+        const fechaFin = document.getElementById('fecha_fin').value;
+        const errorContainer = filterForm.querySelector('.alert-danger');
+        if (errorContainer) errorContainer.remove();
+        if (fechaInicio && fechaFin && new Date(fechaInicio) > new Date(fechaFin)) {
+            event.preventDefault();
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger alert-dismissible fade show';
+            errorDiv.textContent = '{% translate "La fecha de inicio no puede ser posterior a la fecha de fin." %}';
+            errorDiv.innerHTML += '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% translate 'Cerrar alerta' %}"></button>';
+            filterForm.prepend(errorDiv);
+            document.getElementById('fecha_inicio').focus();
+        }
+    });
+
+    // Toggle Filter Panel
+    window.toggleFilterPanel = function() {
+        const filterPanel = document.getElementById('filterPanel');
+        filterPanel.classList.toggle('active');
+    }
+
+    // Clear Filters
+    window.clearFilters = function() {
+        const form = document.getElementById('filterForm');
+        form.reset();
+        form.submit();
+    }
+
+    // Chart.js Initialization
+    const ctx = document.getElementById('movimientosChart').getContext('2d');
+    const chartWrapper = ctx.canvas.parentElement;
+    const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+    gradient.addColorStop(0, 'rgba(0, 168, 98, 0.8)');
+    gradient.addColorStop(1, 'rgba(0, 168, 98, 0.3)');
+
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['{% translate "Crédito" %}', '{% translate "Débito" %}', '{% translate "Transferencia" %}', '{% translate "Bloqueo" %}', '{% translate "Desbloqueo" %}'],
+            datasets: [{
+                label: '{% translate "Monto Total ($)" %}',
+                data: [
+                    {{ creditos|floatformat:2 }},
+                    {{ debitos|floatformat:2 }},
+                    {{ transferencias|floatformat:2 }},
+                    {{ bloqueos|floatformat:2 }},
+                    {{ desbloqueos|floatformat:2 }}
+                ],
+                backgroundColor: gradient,
+                borderColor: var(--mexared-green),
+                borderWidth: 1,
+                borderRadius: 6,
+                barPercentage: 0.85
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            animation: {
+                duration: 1200,
+                easing: 'easeOutQuart'
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        color: document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.9)' : 'rgba(31, 41, 55, 0.9)',
+                        font: { size: 13, family: 'Inter', weight: '600' }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: document.body.classList.contains('dark-mode') ? '#1E293B' : '#FFFFFF',
+                    titleColor: document.body.classList.contains('dark-mode') ? '#FFFFFF' : '#1F2937',
+                    bodyColor: document.body.classList.contains('dark-mode') ? '#FFFFFF' : '#1F2937',
+                    borderColor: document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                    borderWidth: 1
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.8)' : 'rgba(31, 41, 55, 0.8)',
+                        font: { size: 12, family: 'Inter' }
+                    },
+                    grid: {
+                        color: document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: document.body.classList.contains('dark-mode') ? 'rgba(255, 255, 255, 0.8)' : 'rgba(31, 41, 55, 0.8)',
+                        font: { size: 12, family: 'Inter' }
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Remove loading state after chart renders
+    setTimeout(() => {
+        chartWrapper.classList.remove('loading');
+    }, 600);
+
+    // Show welcome toast
+    if (typeof showToast === 'function') {
+        showToast('{% translate "Bienvenido al panel de billetera" %}', 'success');
+    }
+});
+</script>
+{% endblock %}

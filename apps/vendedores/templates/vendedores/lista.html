@@ -1,0 +1,451 @@
+{% extends 'layout/base_distribuidor.html' %}
+{% load static i18n %}
+
+{% block title %}
+    {% trans "Listado de Vendedores" %} | MexaRed
+{% endblock %}
+
+{% block extra_head %}
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, var(--red), var(--purple));
+            color: var(--white);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #1f2937;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .filter-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--purple);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow);
+            margin-bottom: 1.5rem;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        .table th, .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table th {
+            background: #f9fafb;
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .table tbody tr:hover {
+            background: rgba(168, 85, 247, 0.05);
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .badge-active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-inactive {
+            background: #e5e7eb;
+            color: #4b5563;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-toggle {
+            background: transparent;
+            border: none;
+            color: #1f2937;
+            padding: 0.5rem;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            background: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px var(--shadow);
+            z-index: 1000;
+            min-width: 150px;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-menu a {
+            display: block;
+            padding: 0.5rem 1rem;
+            color: #1f2937;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background 0.2s ease;
+        }
+
+        .dropdown-menu a:hover {
+            background: rgba(168, 85, 247, 0.1);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .pagination a {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--purple);
+            transition: background 0.2s ease;
+        }
+
+        .pagination a:hover {
+            background: rgba(168, 85, 247, 0.1);
+        }
+
+        .pagination span {
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .dark-mode .table-container {
+            background: var(--dark-content);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+        }
+
+        .dark-mode .table th, .dark-mode .table td {
+            color: var(--dark-text-light);
+            border-bottom-color: #4b5563;
+        }
+
+        .dark-mode .table th {
+            background: var(--dark-bg);
+        }
+
+        .dark-mode .table tbody tr:hover {
+            background: rgba(168, 85, 247, 0.1);
+        }
+
+        .dark-mode .dropdown-menu {
+            background: var(--dark-content);
+        }
+
+        .dark-mode .dropdown-menu a {
+            color: var(--dark-text-light);
+        }
+
+        .dark-mode .pagination span {
+            color: var(--dark-text-light);
+        }
+
+        .dark-mode .form-input, .dark-mode .form-select {
+            background: var(--dark-bg);
+            border-color: #4b5563;
+            color: var(--dark-text-light);
+        }
+
+        .dark-mode .btn-secondary {
+            background: #4b5563;
+            color: var(--dark-text-light);
+        }
+
+        .dark-mode .btn-secondary:hover {
+            background: #6b7280;
+        }
+
+        @media (max-width: 768px) {
+            .filter-form {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <!-- Mensajes del sistema -->
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Encabezado -->
+        <div class="header">
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                {% trans "Listado de Vendedores" %}
+            </h2>
+            <a href="{% url 'vendedores:crear' %}" class="btn-primary" aria-label="{% trans 'Crear nuevo vendedor' %}">
+                <i class="fas fa-user-plus"></i> {% trans "Crear Nuevo" %}
+            </a>
+        </div>
+
+        <!-- Total acumulado -->
+        <div class="mb-4 text-gray-600 dark:text-gray-300">
+            {% trans "Total acumulado de saldo histórico:" %} <strong>{{ analytics.total_saldo|floatformat:2 }} MXN</strong>
+        </div>
+
+        <!-- Filtros y búsqueda -->
+        <form method="GET" class="filter-form" aria-label="{% trans 'Formulario de filtros' %}">
+            <input
+                name="q"
+                type="text"
+                placeholder="{% trans 'Buscar por nombre, correo o nombre comercial...' %}"
+                class="form-input"
+                value="{{ request.GET.q|default_if_none:'' }}"
+                aria-label="{% trans 'Buscar vendedores' %}"
+                autofocus
+            >
+            <select name="estado" class="form-select" aria-label="{% trans 'Filtrar por estado' %}">
+                <option value="">{% trans "Todos" %}</option>
+                <option value="activo" {% if request.GET.estado == 'activo' %}selected{% endif %}>{% trans "Activos" %}</option>
+                <option value="inactivo" {% if request.GET.estado == 'inactivo' %}selected{% endif %}>{% trans "Inactivos" %}</option>
+            </select>
+            <button type="submit" class="btn-secondary" aria-label="{% trans 'Aplicar filtros' %}">
+                <i class="fas fa-filter"></i> {% trans "Filtrar" %}
+            </button>
+            <a href="{% url 'vendedores:lista' %}" class="btn-secondary" aria-label="{% trans 'Limpiar filtros' %}">
+                <i class="fas fa-undo"></i> {% trans "Limpiar" %}
+            </a>
+        </form>
+
+        <!-- Tabla de vendedores -->
+        <div class="table-container">
+            <table class="table" aria-label="{% trans 'Tabla de vendedores' %}">
+                <thead>
+                    <tr>
+                        <th>{% trans "Nombre Completo" %}</th>
+                        <th>{% trans "Nombre Comercial" %}</th>
+                        <th>{% trans "Email" %}</th>
+                        <th>{% trans "Teléfono" %}</th>
+                        <th>{% trans "Saldo Histórico" %}</th>
+                        <th>{% trans "Saldo Real" %}</th>
+                        <th>{% trans "Estado" %}</th>
+                        <th>{% trans "Registro" %}</th>
+                        <th>{% trans "Acciones" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for relacion in relaciones %}
+                        <tr>
+                            <td>{{ relacion.vendedor.full_name|default:'-' }}</td>
+                            <td>{{ relacion.nombre_comercial|default:'-' }}</td>
+                            <td>{{ relacion.vendedor.email|default:'-' }}</td>
+                            <td>{{ relacion.telefono_contacto|default:'-' }}</td>
+                            <td>{{ relacion.saldo_disponible|floatformat:2 }} MXN</td>
+                            <td>
+                                {% if relacion.vendedor.wallet %}
+                                    {{ relacion.vendedor.wallet.balance|floatformat:2 }} MXN
+                                {% else %}
+                                    0.00 MXN
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge badge-{% if relacion.activo %}active{% else %}inactive{% endif %}">
+                                    {% if relacion.activo %}
+                                        {% trans "Activo" %}
+                                    {% else %}
+                                        {% trans "Inactivo" %}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>{{ relacion.fecha_creacion|date:"d M Y" }}</td>
+                            <td>
+                                <div class="dropdown">
+                                    <button
+                                        class="dropdown-toggle"
+                                        aria-label="{% trans 'Opciones para' %} {{ relacion.vendedor.full_name|default:'Vendedor' }}"
+                                        onclick="toggleDropdown(this)"
+                                    >
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a href="#" aria-label="{% trans 'Ver detalles de' %} {{ relacion.vendedor.full_name|default:'Vendedor' }}">{% trans "Ver" %}</a>
+                                        <a href="{% url 'vendedores:editar' relacion.pk %}" aria-label="{% trans 'Editar' %} {{ relacion.vendedor.full_name|default:'Vendedor' }}">{% trans "Editar" %}</a>
+                                        <a href="{% url 'wallet:transferencia' %}?destino={{ relacion.vendedor.id }}" aria-label="{% trans 'Asignar saldo a' %} {{ relacion.vendedor.full_name|default:'Vendedor' }}">{% trans "Asignar Saldo" %}</a>
+                                        <a
+                                            href="{% url 'vendedores:toggle_active' relacion.pk %}"
+                                            aria-label="{% if relacion.activo %}{% trans 'Desactivar' %}{% else %}{% trans 'Activar' %}{% endif %} {{ relacion.vendedor.full_name|default:'Vendedor' }}"
+                                        >
+                                            {% if relacion.activo %}
+                                                {% trans "Desactivar" %}
+                                            {% else %}
+                                                {% trans "Activar" %}
+                                            {% endif %}
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center text-gray-500 dark:text-gray-400">
+                                {% trans "No hay vendedores registrados." %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        {% if relaciones %}
+            <div class="pagination">
+                {% if page_obj.has_previous %}
+                    <a
+                        href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}"
+                        aria-label="{% trans 'Página anterior' %}"
+                    >
+                        « {% trans "Anterior" %}
+                    </a>
+                {% endif %}
+                <span>
+                    {% trans "Página" %} {{ page_obj.number }} {% trans "de" %} {{ page_obj.paginator.num_pages }} ({{ page_obj.paginator.count }} {% trans "resultados" %})
+                </span>
+                {% if page_obj.has_next %}
+                    <a
+                        href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}"
+                        aria-label="{% trans 'Página siguiente' %}"
+                    >
+                        {% trans "Siguiente" %} »
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Toggle dropdown menu
+        function toggleDropdown(button) {
+            const menu = button.nextElementSibling;
+            const isOpen = menu.classList.contains('show');
+            document.querySelectorAll('.dropdown-menu.show').forEach(m => m.classList.remove('show'));
+            if (!isOpen) {
+                menu.classList.add('show');
+            }
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-menu.show').forEach(menu => menu.classList.remove('show'));
+            }
+        });
+
+        // Focus on search input
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.querySelector('input[name="q"]');
+            if (searchInput) {
+                searchInput.focus();
+            }
+        });
+    </script>
+{% endblock %}

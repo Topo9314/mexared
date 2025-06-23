@@ -1,0 +1,10 @@
+[
+  {
+    "model": "wallet.moneda",
+    "pk": 1,
+    "fields": {
+      "codigo": "MXN",
+      "nombre": "Peso Mexicano"
+    }
+  }
+]

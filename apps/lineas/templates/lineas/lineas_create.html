@@ -1,0 +1,89 @@
+{% extends "base_distribuidor.html" %}
+{% load i18n bootstrap5 %}
+
+{% block title %}
+    {% trans "Create Line | MexaRed" %}
+{% endblock %}
+
+{% block content %}
+<style>
+    .create-container {
+        max-width: 800px;
+        margin: 24px auto;
+        padding: 24px;
+        background: var(--white);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px var(--shadow-light);
+    }
+
+    .dark-mode .create-container {
+        background: var(--dark-sidebar);
+        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+    }
+
+    .create-container h2 {
+        font-size: var(--font-size-xl);
+        font-weight: 600;
+        color: var(--gray-dark);
+        margin-bottom: 16px;
+    }
+
+    .dark-mode .create-container h2 {
+        color: var(--white);
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-group label {
+        font-weight: 500;
+        color: var(--gray-dark);
+    }
+
+    .dark-mode .form-group label {
+        color: var(--white);
+    }
+
+    .form-control {
+        border-radius: 8px;
+        font-size: var(--font-size-sm);
+    }
+
+    .btn-primary, .btn-secondary {
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: var(--font-size-sm);
+    }
+
+    @media (max-width: 768px) {
+        .create-container {
+            padding: 16px;
+        }
+
+        .create-container h2 {
+            font-size: var(--font-size-lg);
+        }
+    }
+</style>
+
+<div class="create-container">
+    <h2>{% trans "Create New Line" %}</h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'core:panel' %}">{% trans "Dashboard" %}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'lineas:list' %}">{% trans "Line Management" %}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{% trans "Create" %}</li>
+        </ol>
+    </nav>
+
+    <form method="post">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        <div class="d-flex justify-content-end gap-2">
+            <a href="{% url 'lineas:list' %}" class="btn btn-secondary">{% trans "Cancel" %}</a>
+            <button type="submit" class="btn btn-primary">{% trans "Create Line" %}</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

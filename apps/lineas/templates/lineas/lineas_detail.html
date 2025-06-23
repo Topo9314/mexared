@@ -1,0 +1,316 @@
+{% extends "base_distribuidor.html" %}
+{% load i18n bootstrap5 %}
+
+{% block title %}
+    {% trans "Line Details | MexaRed" %}
+{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --mexared-green: #00A862;
+        --mexared-orange: #FF5722;
+        --mexared-blue: #2196F3;
+        --white: #FFFFFF;
+        --dark-sidebar: #1A1A2E;
+        --gray-dark: #333333;
+        --gray-medium: #666666;
+        --gray-light: #999999;
+        --shadow-light: rgba(0, 0, 0, 0.1);
+        --shadow-dark: rgba(0, 0, 0, 0.2);
+        --transition-speed: 0.3s;
+        --font-size-xs: 0.75rem;
+        --font-size-sm: 0.875rem;
+        --font-size-md: 1rem;
+        --font-size-lg: 1.25rem;
+        --font-size-xl: 1.5rem;
+    }
+
+    .detail-container {
+        max-width: 900px;
+        margin: 24px auto;
+        padding: 24px;
+        background: var(--white, #FFFFFF);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px var(--shadow-light, rgba(0, 0, 0, 0.1));
+        transition: box-shadow var(--transition-speed, 0.3s) ease;
+    }
+
+    .dark-mode .detail-container {
+        background: var(--dark-sidebar, #1A1A2E);
+        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+    }
+
+    .detail-container h2 {
+        font-size: var(--font-size-xl, 1.5rem);
+        font-weight: 600;
+        color: var(--gray-dark, #333333);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .dark-mode .detail-container h2 {
+        color: var(--white, #FFFFFF);
+    }
+
+    .detail-section {
+        margin-bottom: 24px;
+    }
+
+    .detail-section h4 {
+        font-size: var(--font-size-md, 1rem);
+        font-weight: 600;
+        color: var(--gray-dark, #333333);
+        margin-bottom: 12px;
+    }
+
+    .dark-mode .detail-section h4 {
+        color: var(--white, #FFFFFF);
+    }
+
+    .detail-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .detail-item {
+        flex: 1 1 300px;
+        min-width: 0;
+    }
+
+    .detail-item label {
+        font-weight: 500;
+        color: var(--gray-dark, #333333);
+        font-size: var(--font-size-sm, 0.875rem);
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .dark-mode .detail-item label {
+        color: var(--white, #FFFFFF);
+    }
+
+    .detail-item p {
+        color: var(--gray-medium, #666666);
+        font-size: var(--font-size-sm, 0.875rem);
+        margin: 0;
+        word-break: break-word;
+    }
+
+    .dark-mode .detail-item p {
+        color: var(--gray-light, #999999);
+    }
+
+    .badge {
+        font-size: var(--font-size-xs, 0.75rem);
+        padding: 6px 10px;
+        border-radius: 12px;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    .badge.bg-success { background-color: var(--mexared-green, #00A862); color: var(--white, #FFFFFF); }
+    .badge.bg-secondary { background-color: #6c757d; color: var(--white, #FFFFFF); }
+    .badge.bg-warning { background-color: #ffc107; color: #212529; }
+    .badge.bg-danger { background-color: #dc3545; color: var(--white, #FFFFFF); }
+    .badge.bg-purple { background-color: #6f42c1; color: var(--white, #FFFFFF); }
+    .badge.bg-info { background-color: #17a2b8; color: var(--white, #FFFFFF); }
+
+    .btn-action {
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: var(--font-size-sm, 0.875rem);
+        transition: background-color var(--transition-speed, 0.3s) ease, transform var(--transition-speed, 0.3s) ease;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+    }
+
+    .btn-primary.btn-action { background-color: var(--mexared-blue, #2196F3); border-color: var(--mexared-blue, #2196F3); }
+    .btn-primary.btn-action:hover { background-color: color-mix(in srgb, var(--mexared-blue, #2196F3) 90%, #FFFFFF); }
+    .btn-secondary.btn-action { background-color: #6c757d; border-color: #6c757d; }
+    .btn-secondary.btn-action:hover { background-color: #5c636a; }
+    .btn-danger.btn-action { background-color: #dc3545; border-color: #dc3545; }
+    .btn-danger.btn-action:hover { background-color: #c82333; }
+
+    @media (max-width: 768px) {
+        .detail-container {
+            padding: 16px;
+            margin: 16px;
+        }
+
+        .detail-container h2 {
+            font-size: var(--font-size-lg, 1.25rem);
+        }
+
+        .detail-item {
+            flex: 1 1 100%;
+        }
+    }
+</style>
+
+<div class="detail-container" role="main" aria-label="{% trans 'Line Details' %} {{ linea.msisdn }}">
+    <h2>{% trans "Line Details" %} {{ linea.msisdn }}</h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'core:panel' %}">{% trans "Dashboard" %}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'lineas:list' %}">{% trans "Line Management" %}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{% trans "Details" %}</li>
+        </ol>
+    </nav>
+
+    <div class="detail-section">
+        <h4>{% trans "Line Information" %}</h4>
+        <div class="detail-row">
+            <div class="detail-item">
+                <label>{% trans "MSISDN" %}</label>
+                <p>{{ linea.msisdn }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "ICCID" %}</label>
+                <p>{{ linea.iccid }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "SIM Type" %}</label>
+                <p>{{ linea.get_tipo_sim_display }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "Service Type" %}</label>
+                <p>{{ linea.get_tipo_servicio_display }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "State" %}</label>
+                <p>
+                    {% if linea.estado == 'assigned' %}
+                        <span class="badge bg-success">{% trans "Assigned" %}</span>
+                    {% elif linea.estado == 'idle' %}
+                        <span class="badge bg-secondary">{% trans "Idle" %}</span>
+                    {% elif linea.estado == 'suspended' %}
+                        <span class="badge bg-warning">{% trans "Suspended" %}</span>
+                    {% elif linea.estado == 'cancelled' %}
+                        <span class="badge bg-danger">{% trans "Cancelled" %}</span>
+                    {% elif linea.estado == 'port-out' %}
+                        <span class="badge bg-purple">{% trans "Ported Out" %}</span>
+                    {% elif linea.estado == 'processing' %}
+                        <span class="badge bg-info">{% trans "Processing" %}</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "Distributor" %}</label>
+                <p>{{ linea.distribuidor.username|default:'-' }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "Vendor" %}</label>
+                <p>{{ linea.vendedor.username|default:'-' }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-section">
+        <h4>{% trans "Status Dates" %}</h4>
+        <div class="detail-row">
+            <div class="detail-item">
+                <label>{% trans "Activation Date" %}</label>
+                <p>{{ linea.fecha_activacion|date:"Y-m-d H:i"|default:'-' }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "Suspension Date" %}</label>
+                <p>{{ linea.fecha_suspension|date:"Y-m-d H:i"|default:'-' }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "Cancellation Date" %}</label>
+                <p>{{ linea.fecha_baja|date:"Y-m-d H:i"|default:'-' }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "Port-in Date" %}</label>
+                <p>{{ linea.port_in_date|date:"Y-m-d H:i"|default:'-' }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "Port-out Date" %}</label>
+                <p>{{ linea.port_out_date|date:"Y-m-d H:i"|default:'-' }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "Portability Status" %}</label>
+                <p>{{ linea.get_portability_status_display|default:'-' }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-section">
+        <h4>{% trans "Consumption and Benefits" %}</h4>
+        <div class="detail-row">
+            <div class="detail-item">
+                <label>{% trans "Last Recharge Date" %}</label>
+                <p>{{ linea.fecha_ultima_recarga|date:"Y-m-d H:i"|default:'-' }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "Plan Expiration Date" %}</label>
+                <p>{{ linea.fecha_vencimiento_plan|date:"Y-m-d H:i"|default:'-' }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "Days Available" %}</label>
+                <p>{{ linea.dias_disponibles|default:'0' }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "Data Consumed (MB)" %}</label>
+                <p>{{ linea.datos_consumidos|floatformat:2 }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "Data Available (MB)" %}</label>
+                <p>{{ linea.datos_disponibles|floatformat:2 }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "Minutes Consumed" %}</label>
+                <p>{{ linea.minutos_consumidos|floatformat:2 }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "Minutes Available" %}</label>
+                <p>{{ linea.minutos_disponibles|floatformat:2 }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "SMS Consumed" %}</label>
+                <p>{{ linea.sms_consumidos|floatformat:2 }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "SMS Available" %}</label>
+                <p>{{ linea.sms_disponibles|floatformat:2 }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-section">
+        <h4>{% trans "Audit Information" %}</h4>
+        <div class="detail-row">
+            <div class="detail-item">
+                <label>{% trans "Created By" %}</label>
+                <p>{{ linea.creado_por.username|default:'-' }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "Updated By" %}</label>
+                <p>{{ linea.actualizado_por.username|default:'-' }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "Registration Date" %}</label>
+                <p>{{ linea.fecha_registro|date:"Y-m-d H:i" }}</p>
+            </div>
+            <div class="detail-item">
+                <label>{% trans "Update Date" %}</label>
+                <p>{{ linea.fecha_actualizacion|date:"Y-m-d H:i" }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+        <a href="{% url 'lineas:list' %}" class="btn btn-secondary btn-action">{% trans "Back to List" %}</a>
+        {% if user.is_superuser %}
+            <a href="{% url 'lineas:edit' linea.uuid %}" class="btn btn-primary btn-action">{% trans "Edit" %}</a>
+            <a href="{% url 'lineas:delete' linea.uuid %}" class="btn btn-danger btn-action">{% trans "Cancel Line" %}</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

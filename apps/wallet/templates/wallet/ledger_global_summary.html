@@ -1,0 +1,91 @@
+{% extends "layout/base_distribuidor.html" %}
+{% load i18n static %}
+
+{% block title %}
+    {{ title }} | MexaRed
+{% endblock %}
+
+{% block extra_head %}
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .table-container {
+            overflow-x: auto;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow);
+            margin-bottom: 1.5rem;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+        .table th, .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .table th {
+            background: #f9fafb;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        .table tbody tr:hover {
+            background: rgba(168, 85, 247, 0.05);
+        }
+        .total-row {
+            font-weight: bold;
+            background: #f3f4f6;
+        }
+        @media (max-width: 768px) {
+            .table-container {
+                overflow-x: auto;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="header">
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                {{ title_section }}
+            </h2>
+        </div>
+
+        <div class="table-container">
+            <table class="table" aria-label="{% trans 'Resumen contable global' %}">
+                <thead>
+                    <tr>
+                        <th>{% trans "Rol" %}</th>
+                        <th>{% trans "Saldo Total (MXN)" %}</th>
+                        <th>{% trans "Saldo Bloqueado (MXN)" %}</th>
+                        <th>{% trans "Saldo Disponible (MXN)" %}</th>
+                        <th>{% trans "Cuentas Activas" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for label, data in summary.items %}
+                        <tr {% if label == "Total Global" %}class="total-row"{% endif %}>
+                            <td>{{ label }}</td>
+                            <td>${{ data.balance|floatformat:2 }}</td>
+                            <td>${{ data.blocked|floatformat:2 }}</td>
+                            <td>${{ data.available|floatformat:2 }}</td>
+                            <td>{{ data.count }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

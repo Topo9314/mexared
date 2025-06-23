@@ -1,0 +1,305 @@
+{% extends 'layout/base_distribuidor.html' %}
+{% load static i18n %}
+
+{% block title %}
+    {% trans "Crear Nuevo Vendedor" %} | MexaRed
+{% endblock %}
+
+{% block extra_head %}
+    <style>
+        :root {
+            --primary-red: #f43f5e;
+            --primary-purple: #a855f7;
+            --text-gray: #6b7280;
+            --white: #ffffff;
+            --shadow: rgba(0, 0, 0, 0.05);
+            --dark-bg: #1f2a44;
+            --dark-content: #2e3a59;
+            --dark-text-light: #e0e0e0;
+        }
+
+        .form-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 4px 16px var(--shadow);
+            padding: 2.5rem;
+            max-width: 680px;
+            margin: 2.5rem auto;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .form-container:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px var(--shadow);
+        }
+
+        .form-group {
+            margin-bottom: 1.75rem;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.875rem;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background: #ffffff;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+        }
+
+        .form-group .error {
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .form-group .help-text {
+            color: var(--text-gray);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-red), var(--primary-purple));
+            color: var(--white);
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #e11d48, #9333ea);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(168, 85, 247, 0.3);
+        }
+
+        .btn-primary:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #1f2937;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: background 0.3s ease, transform 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+            transform: translateY(-2px);
+        }
+
+        .error-container {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+            padding: 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            position: relative;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .error-container .dismiss-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: transparent;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dark-mode .form-container {
+            background: rgba(46, 58, 89, 0.95);
+            color: var(--dark-text-light);
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.05);
+        }
+
+        .dark-mode .form-group label {
+            color: var(--dark-text-light);
+        }
+
+        .dark-mode .form-group input {
+            background: var(--dark-bg);
+            border-color: #4b5563;
+            color: var(--dark-text-light);
+        }
+
+        .dark-mode .form-group .help-text {
+            color: #9ca3af;
+        }
+
+        .dark-mode .error-container {
+            background: #7f1d1d;
+            border-left-color: #ef4444;
+            color: #fecaca;
+        }
+
+        .dark-mode .btn-secondary {
+            background: #4b5563;
+            color: var(--dark-text-light);
+        }
+
+        .dark-mode .btn-secondary:hover {
+            background: #6b7280;
+        }
+
+        @media (max-width: 640px) {
+            .form-container {
+                margin: 1.5rem;
+                padding: 2rem;
+            }
+
+            .btn-primary,
+            .btn-secondary {
+                width: 100%;
+                margin-bottom: 0.75rem;
+                justify-content: center;
+            }
+        }
+
+        /* Accessibility */
+        .form-group input:focus,
+        .btn-primary:focus,
+        .btn-secondary:focus {
+            outline: 2px solid var(--primary-purple);
+            outline-offset: 2px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="form-container">
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-8 text-center">
+            {% trans "Crear Nuevo Vendedor" %}
+        </h2>
+
+        {% if form.errors or form.non_field_errors %}
+            <div class="error-container" role="alert" aria-label="{% trans 'Errores del formulario' %}">
+                <button class="dismiss-btn" aria-label="{% trans 'Cerrar alerta de errores' %}" onclick="this.parentElement.style.display='none'">
+                    <i class="fas fa-times"></i>
+                </button>
+                <p class="font-semibold text-red-700 dark:text-red-300 flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    {% trans "Por favor corrige los siguientes errores:" %}
+                </p>
+                <ul class="list-disc list-inside mt-2 text-red-600 dark:text-red-400 text-sm">
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <form method="POST" id="{{ form_id }}" aria-label="{% trans 'Formulario para crear un vendedor' %}" novalidate>
+            {% csrf_token %}
+            {% for field in form.visible_fields %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}" class="form-label">
+                        <i class="fas fa-{% if field.name == 'username' %}user{% elif field.name == 'email' %}envelope{% elif field.name == 'first_name' %}id-card{% elif field.name == 'last_name' %}id-card{% elif field.name|slice:":8" == 'password' %}lock{% elif field.name == 'direccion' %}map-marker-alt{% elif field.name == 'telefono' %}phone{% elif field.name == 'email_contacto' %}envelope{% elif field.name == 'nombre_comercial' %}store{% endif %} mr-1"></i>
+                        {{ field.label }}
+                        {% if field.field.required %}
+                            <span class="text-red-500" aria-hidden="true">*</span>
+                        {% endif %}
+                    </label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <p class="help-text" id="{{ field.id_for_label }}-help">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% if field.errors %}
+                        <p class="error" role="alert" aria-live="polite" id="{{ field.id_for_label }}-error">
+                            <i class="fas fa-exclamation-triangle"></i> {{ field.errors.as_text }}
+                        </p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div class="flex justify-end space-x-4 mt-8">
+                <button type="submit" class="btn-primary" aria-label="{% trans 'Crear vendedor' %}">
+                    <i class="fas fa-save mr-2"></i> {% trans "Crear Vendedor" %}
+                </button>
+                <a href="{% url 'vendedores:lista' %}" class="btn-secondary" aria-label="{% trans 'Cancelar y volver a la lista' %}">
+                    <i class="fas fa-times mr-2"></i> {% trans "Cancelar" %}
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('{{ form_id }}').addEventListener('submit', function (e) {
+            const form = this;
+            const submitButton = form.querySelector('button[type="submit"]');
+
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+                form.classList.add('was-validated');
+                showToast('{% trans "Por favor corrige los errores en el formulario antes de enviar." %}', 'error');
+
+                const firstInvalidField = form.querySelector(':invalid');
+                if (firstInvalidField) {
+                    firstInvalidField.focus();
+                }
+            } else {
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> {% trans "Enviando..." %}';
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('{{ form_id }}');
+            const submitButton = form.querySelector('button[type="submit"]');
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="fas fa-save mr-2"></i> {% trans "Crear Vendedor" %}';
+        });
+    </script>
+{% endblock %}

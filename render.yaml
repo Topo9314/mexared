@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: mexared
+    env: python
+    plan: free
+    repo: https://github.com/Topo9314/mexared.git
+    branch: master
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn config.wsgi"
+    envVars:
+      - key: DEBUG
+        value: false
+      - key: SECRET_KEY
+        value: pon_tu_clave_secreta_segura_aqui
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.prod
+      - key: ALLOWED_HOSTS
+        value: .onrender.com
+
+      # Configuración base de datos PostgreSQL
+      - key: POSTGRES_DB
+        value: tu_nombre_db
+      - key: POSTGRES_USER
+        value: tu_usuario_db
+      - key: POSTGRES_PASSWORD
+        value: tu_password_db
+      - key: POSTGRES_HOST
+        value: tu_host_db
+      - key: POSTGRES_PORT
+        value: 5432
+
+      # Email (SendGrid o SMTP)
+      - key: EMAIL_HOST
+        value: smtp.sendgrid.net
+      - key: EMAIL_PORT
+        value: 587
+      - key: EMAIL_HOST_USER
+        value: apikey
+      - key: EMAIL_HOST_PASSWORD
+        value: tu_sendgrid_api_key
+      - key: DEFAULT_FROM_EMAIL
+        value: notificaciones@mexared.com

@@ -5,7 +5,7 @@ services:
     plan: free
     repo: https://github.com/Topo9314/mexared.git
     branch: master
-    buildCommand: "pip install -r requirements.txt"
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput"
     startCommand: "gunicorn config.wsgi"
     envVars:
       - key: DEBUG
@@ -15,7 +15,7 @@ services:
       - key: DJANGO_SETTINGS_MODULE
         value: config.settings.prod
       - key: ALLOWED_HOSTS
-        value: .onrender.com
+        value: .onrender.com,www.mexared.com.mx,mexared.com.mx
 
       # Configuración base de datos PostgreSQL
       - key: POSTGRES_DB
@@ -40,3 +40,7 @@ services:
         value: tu_sendgrid_api_key
       - key: DEFAULT_FROM_EMAIL
         value: notificaciones@mexared.com
+
+static:
+  - name: staticfiles
+    path: staticfiles

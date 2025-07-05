@@ -8,18 +8,40 @@ import os
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 from datetime import timedelta
+import environ
+import sys
 
-# 🔹 1. DIRECTORIOS Y PATHS
+# 🔹 1. INICIALIZACIÓN DE ENTORNO
+env = environ.Env(
+    DEBUG=(bool, False),
+    ALLOWED_HOSTS=(list, []),
+    CORS_ALLOWED_ORIGINS=(list, []),
+    CSRF_TRUSTED_ORIGINS=(list, []),
+    REDIS_URL=(str, 'redis://127.0.0.1:6379/1'),
+)
+
+# 🔹 2. DIRECTORIOS Y PATHS
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 LOGS_DIR = BASE_DIR / 'logs'
 LOGS_DIR.mkdir(exist_ok=True)
+MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT.mkdir(exist_ok=True)
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT.mkdir(exist_ok=True)
 
-# 🔹 2. SEGURIDAD GENERAL
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'insecure-dev-key-for-testing-only')
-DEBUG = False
-ALLOWED_HOSTS = []
+# 🔹 3. SEGURIDAD GENERAL
+SECRET_KEY = env('DJANGO_SECRET_KEY', default=None)
+if not SECRET_KEY or SECRET_KEY == 'insecure-dev-key-for-testing-only':
+    if 'prod' in env('DJANGO_SETTINGS_MODULE', default='config.settings.base'):
+        raise ValueError("SECRET_KEY debe configurarse en .env para producción")
+    SECRET_KEY = 'insecure-dev-key-for-testing-only'  # Solo para desarrollo local
 
-# 🔹 3. APLICACIONES INSTALADAS
+DEBUG = env('DEBUG')
+ALLOWED_HOSTS = env('ALLOWED_HOSTS')
+CSRF_TRUSTED_ORIGINS = env('CSRF_TRUSTED_ORIGINS')
+CORS_ALLOWED_ORIGINS = env('CORS_ALLOWED_ORIGINS')
+
+# 🔹 4. APLICACIONES INSTALADAS
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -27,15 +49,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'dal',
+    'dal',  # Autocompletado en admin
     'dal_select2',
-    'import_export',
-    'rangefilter',
-
-    'widget_tweaks',
-    'rest_framework',
-    'corsheaders',
-    'django_filters',
+    'import_export',  # Exportación de datos
+    'rangefilter',  # Filtros de rango en admin
+    'widget_tweaks',  # Personalización de formularios
+    'rest_framework',  # APIs REST
+    'corsheaders',  # Soporte CORS
+    'django_filters',  # Filtros en APIs
+    'django_redis',  # Caché con Redis
     'apps.users.apps.UsersConfig',
     'apps.vendedores',
     'apps.transacciones',
@@ -43,31 +65,29 @@ INSTALLED_APPS = [
     'apps.lineas',
     'apps.ofertas',
     'apps.activaciones',
-
-
 ]
 
-# 🔹 4. MIDDLEWARE
+# 🔹 5. MIDDLEWARE
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Servir archivos estáticos
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'apps.middleware.RequestLoggingMiddleware',  # Middleware agregado para log de URL actual
+    'apps.middleware.RequestLoggingMiddleware',  # Log de solicitudes
 ]
 
-# 🔹 5. URLs Y APLICACIÓN
+# 🔹 6. URLs Y APLICACIÓN
 ROOT_URLCONF = 'config.urls'
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
-# 🔹 6. TEMPLATES
+# 🔹 7. TEMPLATES
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -85,15 +105,20 @@ TEMPLATES = [
     },
 ]
 
-# 🔹 7. BASE DE DATOS
-DATABASES = {}
+# 🔹 8. BASE DE DATOS
+DATABASES = {
+    'default': env.db(
+        'DATABASE_URL',
+        default='postgres://postgres:Campo@localhost:5432/mexared_db'
+    )
+}
 
-# 🔹 8. AUTENTICACIÓN
+# 🔹 9. AUTENTICACIÓN
 AUTH_USER_MODEL = 'users.User'
 
-# 🔹 9. INTERNACIONALIZACIÓN
+# 🔹 10. INTERNACIONALIZACIÓN
 LANGUAGE_CODE = 'es-mx'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Mexico_City'  # Ajustado para México
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
@@ -101,19 +126,22 @@ LANGUAGES = [
     ('es-mx', _('Español (México)')),
     ('en', _('English')),
     ('pt-br', _('Português (Brasil)')),
+    # Preparado para expansión a otros mercados (e.g., es-co, es-ar)
 ]
+LOCALE_PATHS = [BASE_DIR / 'locale']
 
-# 🔹 10. ARCHIVOS ESTÁTICOS Y MEDIA
+# 🔹 11. ARCHIVOS ESTÁTICOS Y MEDIA
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# 🔹 11. CAMPO AUTOMÁTICO
+# 🔹 12. CAMPO AUTOMÁTICO
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# 🔹 12. REST FRAMEWORK
+# 🔹 13. REST FRAMEWORK
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -132,12 +160,12 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/hour',
-        'user': '1000/hour',
+        'anon': '500/hour',  # Aumentado para tráfico esperado
+        'user': '5000/hour',
     },
 }
 
-# 🔹 13. JWT CONFIGURACIÓN
+# 🔹 14. JWT CONFIGURACIÓN
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -146,11 +174,12 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# 🔹 14. CORS
+# 🔹 15. CORS
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
+CORS_ALLOWED_ORIGINS = env('CORS_ALLOWED_ORIGINS')
+CSRF_TRUSTED_ORIGINS = env('CSRF_TRUSTED_ORIGINS')
 
-# 🔹 15. LOGGING OPTIMIZADO Y ROBUSTO
+# 🔹 16. LOGGING OPTIMIZADO Y ROBUSTO
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -163,10 +192,14 @@ LOGGING = {
             'format': '{levelname} {message}',
             'style': '{',
         },
+        'json': {
+            '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
+            'format': '%(levelname)s %(asctime)s %(name)s %(module)s %(funcName)s %(lineno)s %(message)s',
+        },
     },
     'handlers': {
         'console': {
-            'level': 'WARNING',
+            'level': 'DEBUG' if DEBUG else 'WARNING',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
@@ -174,9 +207,9 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': LOGS_DIR / 'mexared.log',
-            'maxBytes': 10 * 1024 * 1024,
+            'maxBytes': 10 * 1024 * 1024,  # 10MB
             'backupCount': 5,
-            'formatter': 'verbose',
+            'formatter': 'json',  # JSON para observability
         },
         'security': {
             'level': 'WARNING',
@@ -184,7 +217,7 @@ LOGGING = {
             'filename': LOGS_DIR / 'security.log',
             'maxBytes': 10 * 1024 * 1024,
             'backupCount': 5,
-            'formatter': 'verbose',
+            'formatter': 'json',
         },
     },
     'root': {
@@ -209,36 +242,53 @@ LOGGING = {
         },
         'apps': {
             'handlers': ['console', 'file'],
-            'level': 'WARNING',
+            'level': 'DEBUG' if DEBUG else 'WARNING',
             'propagate': False,
         },
     },
 }
 
-# 🔹 16. SEGURIDAD AVANZADA
-SECURE_SSL_REDIRECT = False
-CSRF_COOKIE_SECURE = False
-SESSION_COOKIE_SECURE = False
-SECURE_HSTS_SECONDS = 0
-SECURE_HSTS_INCLUDE_SUBDOMAINS = False
-SECURE_HSTS_PRELOAD = False
+# 🔹 17. SEGURIDAD AVANZADA
+SECURE_SSL_REDIRECT = True  # Forzar HTTPS en producción
+CSRF_COOKIE_SECURE = True  # Cookies CSRF solo por HTTPS
+SESSION_COOKIE_SECURE = True  # Cookies de sesión solo por HTTPS
+SECURE_HSTS_SECONDS = 31536000  # 1 año para HSTS
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
 
-# 🔹 17. EMAIL
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# 🔹 18. EMAIL
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = env.int('EMAIL_PORT', default=587)
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='MexaRed <no-reply@mexared.com.mx>')
 
-# 🔹 18. CACHE
+# 🔹 19. CACHE
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+        'LOCATION': env('REDIS_URL'),
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         }
     }
 }
 
-# 🔹 19. INTERNACIONALIZACIÓN ADICIONAL
-LOCALE_PATHS = [BASE_DIR / 'locale']
+# 🔹 20. ADDINTELI API CONFIGURACIÓN
+ADDINTELI_API_MODE = env('ADDINTELI_API_MODE', default='sandbox')
+ADDINTELI_API_URL = {
+    'sandbox': env('ADDINTELI_API_URL_SANDBOX', default='https://addinteli-dev-api.com.mx'),
+    'prod': env('ADDINTELI_API_URL_PROD', default='https://addinteli-prod-api.com.mx'),
+}
+ADDINTELI_API_TOKEN = {
+    'sandbox': env('ADDINTELI_API_TOKEN_SANDBOX', default=''),  # Reemplazar con token real
+    'prod': env('ADDINTELI_API_TOKEN_PROD', default=''),  # Reemplazar con token real
+}
+ADDINTELI_DISTRIBUTOR_ID = env('ADDINTELI_DISTRIBUTOR_ID', default='4b61cf5c-7199-462f-a946-464234e9e318')
+ADDINTELI_WALLET_ID = env('ADDINTELI_WALLET_ID', default='fb1f922e-5cf8-4235-926a-06525fd20239')
+ADDINTELI_RETRY_TOTAL = env.int('ADDINTELI_RETRY_TOTAL', default=3)

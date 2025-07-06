@@ -1,0 +1,33 @@
+name: Deploy to Linode
+
+on:
+  push:
+    branches:
+      - master  # Cambia a 'main' si tu rama principal tiene ese nombre
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy via SSH
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          cd /root/MEXARED  # Cambia si tu proyecto está en otra ruta
+          git pull origin master
+          source venv/bin/activate
+          pip install -r requirements.txt
+          python manage.py migrate
+          python manage.py collectstatic --noinput
+          systemctl restart gunicorn
+        EOF
